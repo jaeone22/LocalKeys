@@ -173,7 +173,7 @@ function createWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, "preload.js"),
         },
-        titleBarStyle: "hiddenInset",
+        titleBarStyle: "default", // 운영체제 기본 윈도우 메뉴바 사용
         show: false,
         icon: path.join(__dirname, "assets", "icon.png"),
     });
