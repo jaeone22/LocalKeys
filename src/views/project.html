@@ -79,6 +79,7 @@
             </div>
         </div>
 
+        <script src="../modules/notification.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const projectNameEl = document.getElementById("project-name");
@@ -121,10 +122,10 @@
                             filteredSecrets = secrets;
                             renderSecrets();
                         } else {
-                            showError("Failed to load secrets");
+                            notificationManager.error("Failed to load secrets");
                         }
                     } catch (error) {
-                        showError(`Error loading secrets: ${error.message}`);
+                        notificationManager.error(`Error loading secrets: ${error.message}`);
                     }
                 }
 
@@ -189,12 +190,12 @@
 
                         if (result.success) {
                             await loadSecrets();
-                            showSuccess(`Secret "${key}" deleted successfully`);
+                            notificationManager.success(`Secret "${key}" deleted successfully`);
                         } else {
-                            showError(`Failed to delete secret: ${result.error}`);
+                            notificationManager.error(`Failed to delete secret: ${result.error}`);
                         }
                     } catch (error) {
-                        showError(`Error deleting secret: ${error.message}`);
+                        notificationManager.error(`Error deleting secret: ${error.message}`);
                     }
                 }
 
@@ -259,12 +260,12 @@
                     const value = secretValueInput.value;
 
                     if (!key) {
-                        showError("Please enter a secret key");
+                        notificationManager.error("Please enter a secret key");
                         return;
                     }
 
                     if (secrets.hasOwnProperty(key)) {
-                        showError("A secret with this key already exists");
+                        notificationManager.error("A secret with this key already exists");
                         return;
                     }
 
@@ -274,12 +275,12 @@
                         if (result.success) {
                             hideAddSecretModal();
                             await loadSecrets();
-                            showSuccess(`Secret "${key}" added successfully`);
+                            notificationManager.success(`Secret "${key}" added successfully`);
                         } else {
-                            showError(`Failed to add secret: ${result.error}`);
+                            notificationManager.error(`Failed to add secret: ${result.error}`);
                         }
                     } catch (error) {
-                        showError(`Error adding secret: ${error.message}`);
+                        notificationManager.error(`Error adding secret: ${error.message}`);
                     }
                 }
 
@@ -289,13 +290,13 @@
                     const value = editSecretValueInput.value;
 
                     if (!key) {
-                        showError("Please enter a secret key");
+                        notificationManager.error("Please enter a secret key");
                         return;
                     }
 
                     // 키가 변경된 경우
                     if (key !== editingKey && secrets.hasOwnProperty(key)) {
-                        showError("A secret with this key already exists");
+                        notificationManager.error("A secret with this key already exists");
                         return;
                     }
 
@@ -310,10 +311,10 @@
                         if (result.success) {
                             hideEditSecretModal();
                             await loadSecrets();
-                            showSuccess(`Secret "${key}" saved successfully`);
+                            notificationManager.success(`Secret "${key}" saved successfully`);
                         }
                     } catch (error) {
-                        showError(`Error saving secret: ${error.message}`);
+                        notificationManager.error(`Error saving secret: ${error.message}`);
                     }
                 }
 
@@ -323,10 +324,10 @@
                         const result = await window.localkeys.secrets.export(projectName);
 
                         if (result.success) {
-                            showSuccess(`Secrets exported to ${result.path}`);
+                            notificationManager.success(`Secrets exported to ${result.path}`);
                         }
                     } catch (error) {
-                        showError(`Error exporting secrets: ${error.message}`);
+                        notificationManager.error(`Error exporting secrets: ${error.message}`);
                     }
                 }
 
@@ -353,73 +354,6 @@
                     const div = document.createElement("div");
                     div.textContent = text;
                     return div.innerHTML;
-                }
-
-                function showSuccess(message) {
-                    showMessage(message, "success");
-                }
-
-                function showError(message) {
-                    showMessage(message, "error");
-                }
-
-                function showMessage(message, type) {
-                    // 기존 메시지들이 있다면 제거
-                    const existingMessages = document.querySelectorAll('.message');
-                    existingMessages.forEach(msg => {
-                        if (msg.parentNode) {
-                            msg.remove();
-                        }
-                    });
-
-                    const messageEl = document.createElement("div");
-                    messageEl.className = `message message-${type}`;
-
-                    // 아이콘 결정
-                    let icon = '✓';
-                    if (type === 'error') icon = '✕';
-                    else if (type === 'warning') icon = '⚠';
-
-                    messageEl.innerHTML = `
-                        <div class="message-content">
-                            <div class="message-header">
-                                <div class="message-left">
-                                    <div class="message-icon">${icon}</div>
-                                    <div class="message-text">${escapeHtml(message)}</div>
-                                </div>
-                            </div>
-                            <button class="message-close">×</button>
-                        </div>
-                    `;
-
-                    document.body.appendChild(messageEl);
-
-                    // 애니메이션을 위해 약간의 딜레이 후 show 클래스 추가
-                    setTimeout(() => {
-                        messageEl.classList.add('show');
-                    }, 10);
-
-                    // 닫기 버튼 이벤트
-                    const closeBtn = messageEl.querySelector('.message-close');
-                    closeBtn.addEventListener('click', () => {
-                        hideMessage(messageEl);
-                    });
-
-                    // 로컬스토리지에 알림 저장
-                    saveNotificationToStorage(message, type);
-                }
-
-                function hideMessage(messageEl) {
-                    messageEl.classList.add('hide');
-                    // 알림을 닫을 때 로컬스토리지에서 제거
-                    localStorage.removeItem('localkeys_notifications');
-
-                    // 애니메이션이 끝난 후 DOM에서 제거
-                    setTimeout(() => {
-                        if (document.body.contains(messageEl)) {
-                            document.body.removeChild(messageEl);
-                        }
-                    }, 300);
                 }
 
                 // 이벤트 리스너
@@ -511,97 +445,13 @@
                     }
                 });
 
-                // 로컬스토리지에 저장된 알림 불러오기
-                function loadStoredNotifications() {
-                    const stored = localStorage.getItem('localkeys_notifications');
-                    if (stored) {
-                        try {
-                            const notifications = JSON.parse(stored);
-                            if (notifications && notifications.length > 0) {
-                                // 가장 최근 알림만 표시
-                                const latestNotification = notifications[notifications.length - 1];
-                                showMessageStatic(latestNotification.message, latestNotification.type);
-
-                                // 표시 후에도 로컬스토리지에 유지 (사용자가 닫을 때 제거)
-                            }
-                        } catch (error) {
-                            console.error('Failed to load stored notifications:', error);
-                            localStorage.removeItem('localkeys_notifications');
-                        }
-                    }
-                }
-
-                // 애니메이션 없이 알림 표시 (저장된 알림용)
-                function showMessageStatic(message, type) {
-                    // 기존 메시지들이 있다면 제거
-                    const existingMessages = document.querySelectorAll('.message');
-                    existingMessages.forEach(msg => {
-                        if (msg.parentNode) {
-                            msg.remove();
-                        }
-                    });
-
-                    const messageEl = document.createElement("div");
-                    messageEl.className = `message message-${type}`;
-
-                    // 아이콘 결정
-                    let icon = '✓';
-                    if (type === 'error') icon = '✕';
-                    else if (type === 'warning') icon = '⚠';
-
-                    messageEl.innerHTML = `
-                        <div class="message-content">
-                            <div class="message-header">
-                                <div class="message-left">
-                                    <div class="message-icon">${icon}</div>
-                                    <div class="message-text">${escapeHtml(message)}</div>
-                                </div>
-                            </div>
-                            <button class="message-close">×</button>
-                        </div>
-                    `;
-
-                    document.body.appendChild(messageEl);
-
-                    // 애니메이션 없이 바로 표시
-                    messageEl.style.right = '20px';
-                    messageEl.style.bottom = '20px';
-                    messageEl.style.opacity = '1';
-
-                    // 닫기 버튼 이벤트
-                    const closeBtn = messageEl.querySelector('.message-close');
-                    closeBtn.addEventListener('click', () => {
-                        hideMessage(messageEl);
-                    });
-                }
-
-                // 알림을 로컬스토리지에 저장
-                function saveNotificationToStorage(message, type) {
-                    try {
-                        const stored = localStorage.getItem('localkeys_notifications');
-                        const notifications = stored ? JSON.parse(stored) : [];
-
-                        // 새 알림 추가 (최대 5개까지 유지)
-                        notifications.push({ message, type, timestamp: Date.now() });
-                        if (notifications.length > 5) {
-                            notifications.splice(0, notifications.length - 5);
-                        }
-
-                        localStorage.setItem('localkeys_notifications', JSON.stringify(notifications));
-                    } catch (error) {
-                        console.error('Failed to save notification:', error);
-                    }
-                }
-
                 // 초기화
                 projectName = getProjectNameFromURL();
                 if (projectName) {
                     projectNameEl.textContent = projectName;
                     loadSecrets();
-                    // 저장된 알림 불러오기
-                    loadStoredNotifications();
                 } else {
-                    showError("No project specified");
+                    notificationManager.error("No project specified");
                     setTimeout(() => {
                         window.location.href = "dashboard.html";
                     }, 2000);

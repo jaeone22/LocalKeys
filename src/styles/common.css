@@ -313,25 +313,42 @@ input, textarea, select, [contenteditable="true"], .selectable {
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease-out;
     opacity: 0;
 }
 
 .message.show {
     right: 20px;
     opacity: 1;
+    animation: slideIn 0.3s ease-out;
 }
 
 .message.hide {
     right: -400px;
     opacity: 0;
+    animation: slideOut 0.3s ease-out;
 }
 
-/* 여러 알림이 있을 때 위로 쌓이도록 설정 */
-.message:nth-of-type(2) { bottom: 80px; }
-.message:nth-of-type(3) { bottom: 140px; }
-.message:nth-of-type(4) { bottom: 200px; }
-.message:nth-of-type(5) { bottom: 260px; }
+@keyframes slideIn {
+    from {
+        right: -400px;
+        opacity: 0;
+    }
+    to {
+        right: 20px;
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        right: 20px;
+        opacity: 1;
+    }
+    to {
+        right: -400px;
+        opacity: 0;
+    }
+}
 
 .message-content {
     padding: 16px;
