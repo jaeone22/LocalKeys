@@ -274,7 +274,7 @@ body {
 
 .modal {
     background-color: var(--bg-secondary);
-    padding: 30px;
+    padding: 20px;
     max-width: 500px;
     width: 90%;
     max-height: 80vh;
@@ -413,7 +413,7 @@ body {
 
 .unlock-form {
     background-color: var(--bg-secondary);
-    padding: 30px;
+    padding: 20px;
 }
 
 .unlock-btn {
@@ -662,31 +662,6 @@ body {
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-secondary);
-}
-
-.stats-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background-color: var(--bg-secondary);
-    padding: 20px;
-    text-align: center;
-}
-
-.stat-value {
-    font-size: 32px;
-    font-weight: 600;
-    color: var(--accent);
-    margin-bottom: 5px;
-}
-
-.stat-label {
-    font-size: 14px;
     color: var(--text-secondary);
 }
 

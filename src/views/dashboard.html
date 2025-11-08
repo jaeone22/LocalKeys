@@ -19,22 +19,6 @@
                 </div>
             </div>
 
-            <!-- 통계 카드 -->
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-value" id="total-projects">0</div>
-                    <div class="stat-label">Total Projects</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="total-secrets">0</div>
-                    <div class="stat-label">Total Secrets</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="recent-access">0</div>
-                    <div class="stat-label">Recent Access</div>
-                </div>
-            </div>
-
             <!-- 검색 바 -->
             <div class="search-bar">
                 <input type="text" class="search-input" id="search-input" placeholder="Search projects..." />
@@ -82,11 +66,6 @@
                 const cancelAddProject = document.getElementById("cancel-add-project");
                 const confirmAddProject = document.getElementById("confirm-add-project");
 
-                // 통계 요소
-                const totalProjectsEl = document.getElementById("total-projects");
-                const totalSecretsEl = document.getElementById("total-secrets");
-                const recentAccessEl = document.getElementById("recent-access");
-
                 let projects = [];
                 let filteredProjects = [];
 
@@ -99,7 +78,6 @@
                             projects = result.data;
                             filteredProjects = projects;
                             renderProjects();
-                            updateStats();
                         } else {
                             showError("Failed to load projects");
                         }
@@ -142,15 +120,6 @@
                         .join("");
 
                     projectsContainer.innerHTML = `<div class="projects-grid">${projectsHTML}</div>`;
-                }
-
-                // 통계 업데이트
-                function updateStats() {
-                    totalProjectsEl.textContent = projects.length;
-                    totalSecretsEl.textContent = projects.reduce((sum, project) => sum + project.secretCount, 0);
-
-                    // 최근 접근 횟수 (실제로는 로그에서 가져와야 함)
-                    recentAccessEl.textContent = "0"; // 임시 값
                 }
 
                 // 프로젝트 열기
