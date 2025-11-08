@@ -311,8 +311,6 @@
                             hideEditSecretModal();
                             await loadSecrets();
                             showSuccess(`Secret "${key}" saved successfully`);
-                        } else {
-                            showError(`Failed to save secret: ${result.error}`);
                         }
                     } catch (error) {
                         showError(`Error saving secret: ${error.message}`);
@@ -326,8 +324,6 @@
 
                         if (result.success) {
                             showSuccess(`Secrets exported to ${result.path}`);
-                        } else {
-                            showError(`Failed to export secrets: ${result.error}`);
                         }
                     } catch (error) {
                         showError(`Error exporting secrets: ${error.message}`);
