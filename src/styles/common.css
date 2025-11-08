@@ -299,32 +299,124 @@ input, textarea, select, [contenteditable="true"], .selectable {
 
 /* 알림 메시지 */
 .message {
-    padding: 15px;
-    margin-bottom: 20px;
-    font-size: 14px;
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: auto;
+    bottom: 20px;
+    right: -400px;
     z-index: 1000;
-    max-width: 400px;
+    max-width: 320px;
+    min-width: 280px;
+    padding: 0;
+    border-radius: 8px;
+    background: rgba(33, 33, 33, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease-out;
+    opacity: 0;
 }
 
-.message-success {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--success);
+.message.show {
+    right: 20px;
+    opacity: 1;
+}
+
+.message.hide {
+    right: -400px;
+    opacity: 0;
+}
+
+/* 여러 알림이 있을 때 위로 쌓이도록 설정 */
+.message:nth-of-type(2) { bottom: 80px; }
+.message:nth-of-type(3) { bottom: 140px; }
+.message:nth-of-type(4) { bottom: 200px; }
+.message:nth-of-type(5) { bottom: 260px; }
+
+.message-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.message-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.message-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+}
+
+.message-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.message-success .message-icon {
+    background: rgba(52, 199, 89, 0.2);
     color: var(--success);
+    border: 1px solid rgba(52, 199, 89, 0.3);
 }
 
-.message-error {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--error);
+.message-error .message-icon {
+    background: rgba(255, 69, 58, 0.2);
     color: var(--error);
+    border: 1px solid rgba(255, 69, 58, 0.3);
 }
 
-.message-warning {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--warning);
+.message-warning .message-icon {
+    background: rgba(255, 159, 10, 0.2);
     color: var(--warning);
+    border: 1px solid rgba(255, 159, 10, 0.3);
+}
+
+.message-text {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text-primary);
+    word-wrap: break-word;
+}
+
+.message-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.message-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
 }
 
 /* 로딩 스피너 */
