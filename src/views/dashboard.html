@@ -11,11 +11,9 @@
             <div class="page-header dashboard-header">
                 <h1 class="page-title dashboard-title">Projects</h1>
                 <div class="header-actions">
-                    <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
                     <button class="btn" id="add-project-btn">Add Project</button>
                     <button class="btn btn-secondary" id="logs-btn">Logs</button>
                     <button class="btn btn-secondary" id="lock-btn">Lock</button>
-                    <button class="btn btn-danger" id="quit-btn">Quit</button>
                 </div>
             </div>
 
@@ -57,10 +55,8 @@
                 const projectsContainer = document.getElementById("projects-container");
                 const searchInput = document.getElementById("search-input");
                 const addProjectBtn = document.getElementById("add-project-btn");
-                const refreshBtn = document.getElementById("refresh-btn");
                 const logsBtn = document.getElementById("logs-btn");
                 const lockBtn = document.getElementById("lock-btn");
-                const quitBtn = document.getElementById("quit-btn");
                 const addProjectModal = document.getElementById("add-project-modal");
                 const projectNameInput = document.getElementById("project-name");
                 const cancelAddProject = document.getElementById("cancel-add-project");
@@ -252,7 +248,6 @@
                 // 이벤트 리스너
                 searchInput.addEventListener("input", searchProjects);
                 addProjectBtn.addEventListener("click", showAddProjectModal);
-                refreshBtn.addEventListener("click", loadProjects);
 
                 logsBtn.addEventListener("click", function () {
                     window.location.href = "logs.html";
@@ -266,16 +261,6 @@
                     }
                 });
 
-                quitBtn.addEventListener("click", async function () {
-                    if (confirm("Are you sure you want to quit LocalKeys?")) {
-                        try {
-                            await window.localkeys.app.quit();
-                        } catch (error) {
-                            showError(`Error quitting app: ${error.message}`);
-                        }
-                    }
-                });
-
                 cancelAddProject.addEventListener("click", hideAddProjectModal);
                 confirmAddProject.addEventListener("click", addProject);
 
@@ -285,9 +270,27 @@
                     }
                 });
 
+                // 모달 외부 클릭 감지를 위한 변수
+                let mouseDownTarget = null;
+
+                // 마우스 다운 이벤트 추적
+                document.addEventListener("mousedown", function (e) {
+                    mouseDownTarget = e.target;
+                });
+
                 addProjectModal.addEventListener("click", function (e) {
-                    if (e.target === addProjectModal) {
+                    // 클릭 시작과 끝 모두 모달 오버레이인 경우에만 닫기
+                    if (mouseDownTarget === addProjectModal && e.target === addProjectModal) {
                         hideAddProjectModal();
+                    }
+                });
+
+                // 마우스 업 이벤트 추적 - 클릭 해제도 밖에서 해야 함
+                document.addEventListener("mouseup", function (e) {
+                    // 클릭 시작이 모달 오버레이였지만 클릭 해제가 모달 외부인 경우 모달 닫기
+                    if (mouseDownTarget === addProjectModal && e.target !== addProjectModal) {
+                        mouseDownTarget = null; // 초기화
+                        return;
                     }
                 });
 
@@ -295,6 +298,20 @@
                 window.openProject = openProject;
                 window.deleteProject = deleteProject;
                 window.showAddProjectModal = showAddProjectModal;
+
+                // 자동 새로고침 설정 (10초마다)
+                const autoRefreshInterval = setInterval(async () => {
+                    if (document.visibilityState === "visible") {
+                        await loadProjects();
+                    }
+                }, 10000);
+
+                // 페이지가 보이지 않을 때는 자동 새로고침 중지
+                document.addEventListener("visibilitychange", () => {
+                    if (document.visibilityState === "hidden") {
+                        clearInterval(autoRefreshInterval);
+                    }
+                });
 
                 // 초기 로드
                 loadProjects();

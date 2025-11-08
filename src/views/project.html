@@ -14,10 +14,8 @@
                     <span id="project-name">Project</span>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
                     <button class="btn" id="add-secret-btn">Add Secret</button>
                     <button class="btn btn-secondary" id="export-btn">Export .env</button>
-                    <button class="btn btn-danger" id="quit-btn">Quit</button>
                 </div>
             </div>
 
@@ -32,11 +30,6 @@
                 <div class="loading">
                     <div class="spinner"></div>
                 </div>
-            </div>
-
-            <!-- 내보내기 섹션 -->
-            <div class="export-section">
-                <button class="btn btn-secondary" id="export-env-btn">Export as .env file</button>
             </div>
         </div>
 
@@ -53,7 +46,7 @@
                     </div>
                     <div class="input-group">
                         <label for="secret-value">Value</label>
-                        <textarea id="secret-value" placeholder="Enter secret value" rows="3"></textarea>
+                        <input type="text" id="secret-value" placeholder="Enter secret value" autocomplete="off" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -76,7 +69,7 @@
                     </div>
                     <div class="input-group">
                         <label for="edit-secret-value">Value</label>
-                        <textarea id="edit-secret-value" placeholder="Enter secret value" rows="3"></textarea>
+                        <input type="text" id="edit-secret-value" placeholder="Enter secret value" autocomplete="off" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -92,11 +85,8 @@
                 const secretsContainer = document.getElementById("secrets-container");
                 const searchInput = document.getElementById("search-input");
                 const backBtn = document.getElementById("back-btn");
-                const refreshBtn = document.getElementById("refresh-btn");
                 const addSecretBtn = document.getElementById("add-secret-btn");
                 const exportBtn = document.getElementById("export-btn");
-                const exportEnvBtn = document.getElementById("export-env-btn");
-                const quitBtn = document.getElementById("quit-btn");
 
                 // 모달 요소
                 const addSecretModal = document.getElementById("add-secret-modal");
@@ -164,8 +154,7 @@
               <div class="secret-key">${escapeHtml(key)}</div>
               <div class="secret-actions">
                 <button class="toggle-visibility" onclick="toggleVisibility('${key}')">👁️</button>
-                <button class="copy-btn" onclick="copyToClipboard('${key}')">📋</button>
-                <button class="btn btn-secondary" onclick="editSecret('${key}')">Edit</button>
+                  <button class="btn btn-secondary" onclick="editSecret('${key}')">Edit</button>
                 <button class="btn btn-danger" onclick="deleteSecret('${key}')">Delete</button>
               </div>
             </div>
@@ -182,23 +171,6 @@
                 function toggleVisibility(key) {
                     const valueEl = document.getElementById(`value-${key}`);
                     valueEl.classList.toggle("masked");
-                }
-
-                // 클립보드에 복사
-                async function copyToClipboard(key) {
-                    try {
-                        // 승인 필요
-                        const result = await window.localkeys.secrets.get(projectName, key);
-
-                        if (result.success) {
-                            await navigator.clipboard.writeText(result.data);
-                            showSuccess(`Secret "${key}" copied to clipboard`);
-                        } else {
-                            showError(`Failed to access secret: ${result.error}`);
-                        }
-                    } catch (error) {
-                        showError(`Error copying secret: ${error.message}`);
-                    }
                 }
 
                 // 시크릿 편집
@@ -387,20 +359,8 @@
                 backBtn.addEventListener("click", function () {
                     window.location.href = "dashboard.html";
                 });
-                refreshBtn.addEventListener("click", loadSecrets);
                 addSecretBtn.addEventListener("click", showAddSecretModal);
                 exportBtn.addEventListener("click", exportAsEnv);
-                exportEnvBtn.addEventListener("click", exportAsEnv);
-
-                quitBtn.addEventListener("click", async function () {
-                    if (confirm("Are you sure you want to quit LocalKeys?")) {
-                        try {
-                            await window.localkeys.app.quit();
-                        } catch (error) {
-                            showError(`Error quitting app: ${error.message}`);
-                        }
-                    }
-                });
 
                 cancelAddSecret.addEventListener("click", hideAddSecretModal);
                 confirmAddSecret.addEventListener("click", addSecret);
@@ -413,30 +373,75 @@
                     }
                 });
 
+                secretValueInput.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        addSecret();
+                    }
+                });
+
                 editSecretKeyInput.addEventListener("keypress", function (e) {
                     if (e.key === "Enter") {
                         editSecretValueInput.focus();
                     }
                 });
 
+                editSecretValueInput.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        saveSecret();
+                    }
+                });
+
+                // 모달 외부 클릭 감지를 위한 변수
+                let mouseDownTarget = null;
+
+                // 마우스 다운 이벤트 추적
+                document.addEventListener("mousedown", function (e) {
+                    mouseDownTarget = e.target;
+                });
+
                 addSecretModal.addEventListener("click", function (e) {
-                    if (e.target === addSecretModal) {
+                    // 클릭 시작과 끝 모두 모달 오버레이인 경우에만 닫기
+                    if (mouseDownTarget === addSecretModal && e.target === addSecretModal) {
                         hideAddSecretModal();
                     }
                 });
 
                 editSecretModal.addEventListener("click", function (e) {
-                    if (e.target === editSecretModal) {
+                    // 클릭 시작과 끝 모두 모달 오버레이인 경우에만 닫기
+                    if (mouseDownTarget === editSecretModal && e.target === editSecretModal) {
                         hideEditSecretModal();
+                    }
+                });
+
+                // 마우스 업 이벤트 추적 - 클릭 해제도 밖에서 해야 함
+                document.addEventListener("mouseup", function (e) {
+                    // 클릭 시작이 모달 오버레이였지만 클릭 해제가 모달 외부인 경우 모달 닫기
+                    if ((mouseDownTarget === addSecretModal && e.target !== addSecretModal) ||
+                        (mouseDownTarget === editSecretModal && e.target !== editSecretModal)) {
+                        mouseDownTarget = null; // 초기화
+                        return;
                     }
                 });
 
                 // 전역 함수로 등록 (HTML onclick에서 사용)
                 window.toggleVisibility = toggleVisibility;
-                window.copyToClipboard = copyToClipboard;
                 window.editSecret = editSecret;
                 window.deleteSecret = deleteSecret;
                 window.showAddSecretModal = showAddSecretModal;
+
+                // 자동 새로고침 설정 (5초마다)
+                const autoRefreshInterval = setInterval(async () => {
+                    if (document.visibilityState === "visible") {
+                        await loadSecrets();
+                    }
+                }, 5000);
+
+                // 페이지가 보이지 않을 때는 자동 새로고침 중지
+                document.addEventListener("visibilitychange", () => {
+                    if (document.visibilityState === "hidden") {
+                        clearInterval(autoRefreshInterval);
+                    }
+                });
 
                 // 초기화
                 projectName = getProjectNameFromURL();

@@ -9,40 +9,11 @@
     <body>
         <div class="container">
             <div class="page-header logs-header">
-                <h1 class="page-title logs-title">Access Logs</h1>
-                <div class="header-actions">
-                    <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
-                    <button class="btn btn-secondary" id="back-btn">Back to Dashboard</button>
-                    <button class="btn btn-danger" id="quit-btn">Quit</button>
+                <div class="page-title logs-title">
+                    <button class="back-btn" id="back-btn">←</button>
+                    Access Logs
                 </div>
-            </div>
-
-            <!-- 필터 -->
-            <div class="filters">
-                <div class="filter-group">
-                    <label for="type-filter">Type:</label>
-                    <select id="type-filter">
-                        <option value="">All Categories</option>
-                        <option value="app">App</option>
-                        <option value="lock">Lock</option>
-                        <option value="access">Access</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="limit-filter">Limit:</label>
-                    <select id="limit-filter">
-                        <option value="50">50 entries</option>
-                        <option value="100">100 entries</option>
-                        <option value="200">200 entries</option>
-                        <option value="500">500 entries</option>
-                    </select>
-                </div>
-
-                <div class="search-bar">
-                    <input type="text" class="search-input" id="search-input" placeholder="Search logs..." />
-                    <span class="search-icon">🔍</span>
-                </div>
+                <div class="header-actions"></div>
             </div>
 
             <!-- 로그 목록 -->
@@ -51,28 +22,18 @@
                     <div class="spinner"></div>
                 </div>
             </div>
-
-            <!-- 페이지네이션 -->
-            <div class="pagination" id="pagination">
-                <!-- JavaScript로 동적으로 생성 -->
-            </div>
         </div>
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const logsContainer = document.getElementById("logs-container");
-                const pagination = document.getElementById("pagination");
-                const typeFilter = document.getElementById("type-filter");
-                const limitFilter = document.getElementById("limit-filter");
-                const searchInput = document.getElementById("search-input");
-                const refreshBtn = document.getElementById("refresh-btn");
                 const backBtn = document.getElementById("back-btn");
-                const quitBtn = document.getElementById("quit-btn");
 
                 let allLogs = [];
-                let filteredLogs = [];
-                let currentPage = 1;
-                const logsPerPage = 50;
+                let displayedLogsCount = 0;
+                const logsPerLoad = 50;
+                let isLoading = false;
+                let hasMoreLogs = true;
 
                 // 로그 로드
                 async function loadLogs() {
@@ -81,7 +42,9 @@
 
                         if (result.success) {
                             allLogs = result.data.reverse(); // 최신 로그부터 표시
-                            applyFilters();
+                            displayedLogsCount = 0;
+                            hasMoreLogs = true;
+                            renderLogs();
                         } else {
                             showError("Failed to load logs");
                         }
@@ -90,125 +53,67 @@
                     }
                 }
 
-                // 필터 적용
-                function applyFilters() {
-                    const typeFilterValue = typeFilter.value;
-                    const searchQuery = searchInput.value.toLowerCase().trim();
-                    const limitValue = parseInt(limitFilter.value);
+                // 추가 로그 로드 (무한 스크롤)
+                function loadMoreLogs() {
+                    if (isLoading || !hasMoreLogs) return;
 
-                    // 카테고리 필터링
-                    filteredLogs = allLogs.filter((log) => {
-                        if (typeFilterValue && log.category !== typeFilterValue) {
-                            return false;
+                    isLoading = true;
+
+                    setTimeout(() => {
+                        const startIndex = displayedLogsCount;
+                        const endIndex = Math.min(startIndex + logsPerLoad, allLogs.length);
+
+                        if (startIndex >= allLogs.length) {
+                            hasMoreLogs = false;
+                            isLoading = false;
+                            return;
                         }
 
-                        // 검색 필터링
-                        if (searchQuery && !log.message.toLowerCase().includes(searchQuery)) {
-                            return false;
+                        const newLogs = allLogs.slice(startIndex, endIndex);
+                        const logsHTML = newLogs
+                            .map(
+                                (log) => `
+                  <div class="log-item">
+                    <div class="log-header">
+                      <div class="log-timestamp">${formatTimestamp(log.timestamp)}</div>
+                      <div class="log-type ${log.category}">${log.category}</div>
+                    </div>
+                    <div class="log-message">${escapeHtml(log.message)}</div>
+                  </div>
+                `
+                            )
+                            .join("");
+
+                        if (displayedLogsCount === 0) {
+                            logsContainer.innerHTML = logsHTML;
+                        } else {
+                            logsContainer.innerHTML += logsHTML;
                         }
 
-                        return true;
-                    });
-
-                    // 개수 제한
-                    if (limitValue && limitValue > 0) {
-                        filteredLogs = filteredLogs.slice(0, limitValue);
-                    }
-
-                    currentPage = 1;
-                    renderLogs();
-                    renderPagination();
+                        displayedLogsCount = endIndex;
+                        hasMoreLogs = endIndex < allLogs.length;
+                        isLoading = false;
+                    }, 100);
                 }
 
                 // 로그 렌더링
                 function renderLogs() {
-                    if (filteredLogs.length === 0) {
+                    if (allLogs.length === 0) {
                         logsContainer.innerHTML = `
             <div class="empty-state">
               <div class="empty-state-icon">📋</div>
               <div class="empty-state-title">No logs found</div>
               <div class="empty-state-description">
-                ${allLogs.length === 0 ? "No logs have been recorded yet." : "No logs match your filter criteria."}
+                No logs have been recorded yet.
               </div>
             </div>
           `;
                         return;
                     }
 
-                    const startIndex = (currentPage - 1) * logsPerPage;
-                    const endIndex = startIndex + logsPerPage;
-                    const pageLogs = filteredLogs.slice(startIndex, endIndex);
-
-                    const logsHTML = pageLogs
-                        .map(
-                            (log) => `
-          <div class="log-item">
-            <div class="log-header">
-              <div class="log-timestamp">${formatTimestamp(log.timestamp)}</div>
-              <div class="log-type ${log.category}">${log.category}</div>
-            </div>
-            <div class="log-message">${escapeHtml(log.message)}</div>
-          </div>
-        `
-                        )
-                        .join("");
-
-                    logsContainer.innerHTML = logsHTML;
-                }
-
-                // 페이지네이션 렌더링
-                function renderPagination() {
-                    const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
-
-                    if (totalPages <= 1) {
-                        pagination.innerHTML = "";
-                        return;
-                    }
-
-                    let paginationHTML = "";
-
-                    // 이전 버튼
-                    paginationHTML += `
-          <button ${currentPage === 1 ? "disabled" : ""} onclick="changePage(${currentPage - 1})">
-            Previous
-          </button>
-        `;
-
-                    // 페이지 번호
-                    const maxVisiblePages = 5;
-                    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-                    if (endPage - startPage < maxVisiblePages - 1) {
-                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                    }
-
-                    for (let i = startPage; i <= endPage; i++) {
-                        if (i === currentPage) {
-                            paginationHTML += `<div class="current-page">${i}</div>`;
-                        } else {
-                            paginationHTML += `<button onclick="changePage(${i})">${i}</button>`;
-                        }
-                    }
-
-                    // 다음 버튼
-                    paginationHTML += `
-          <button ${currentPage === totalPages ? "disabled" : ""} onclick="changePage(${currentPage + 1})">
-            Next
-          </button>
-        `;
-
-                    pagination.innerHTML = paginationHTML;
-                }
-
-                // 페이지 변경
-                function changePage(page) {
-                    currentPage = page;
-                    renderLogs();
-                    renderPagination();
-
-                    // 스크롤을 맨 위로
-                    logsContainer.scrollTop = 0;
+                    logsContainer.innerHTML = ""; // 초기화
+                    displayedLogsCount = 0;
+                    loadMoreLogs(); // 첫 50개 로드
                 }
 
                 // 타임스탬프 포맷
@@ -263,28 +168,30 @@
                     }, 3000);
                 }
 
-                // 이벤트 리스너
-                typeFilter.addEventListener("change", applyFilters);
-                limitFilter.addEventListener("change", applyFilters);
-                searchInput.addEventListener("input", applyFilters);
-                refreshBtn.addEventListener("click", loadLogs);
+                // 이벤트 리스너 - 무한 스크롤
+                logsContainer.addEventListener("scroll", function () {
+                    if (logsContainer.scrollTop + logsContainer.clientHeight >= logsContainer.scrollHeight - 50) {
+                        loadMoreLogs();
+                    }
+                });
 
                 backBtn.addEventListener("click", function () {
                     window.location.href = "dashboard.html";
                 });
 
-                quitBtn.addEventListener("click", async function () {
-                    if (confirm("Are you sure you want to quit LocalKeys?")) {
-                        try {
-                            await window.localkeys.app.quit();
-                        } catch (error) {
-                            showError(`Error quitting app: ${error.message}`);
-                        }
+                // 자동 새로고침 설정 (15초마다)
+                const autoRefreshInterval = setInterval(async () => {
+                    if (document.visibilityState === "visible") {
+                        await loadLogs();
+                    }
+                }, 15000);
+
+                // 페이지가 보이지 않을 때는 자동 새로고침 중지
+                document.addEventListener("visibilitychange", () => {
+                    if (document.visibilityState === "hidden") {
+                        clearInterval(autoRefreshInterval);
                     }
                 });
-
-                // 전역 함수로 등록 (HTML onclick에서 사용)
-                window.changePage = changePage;
 
                 // 초기 로드
                 loadLogs();

@@ -53,7 +53,13 @@ body {
 }
 
 /* 버튼 기본 스타일 */
-.btn, .unlock-btn, .approval-btn, .back-btn, .toggle-visibility, .copy-btn, .pagination button {
+.btn,
+.unlock-btn,
+.approval-btn,
+.back-btn,
+.toggle-visibility,
+.copy-btn,
+.pagination button {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -71,48 +77,62 @@ body {
 }
 
 /* 기본 버튼 (파란색) */
-.btn, .unlock-btn, .approve-btn {
+.btn,
+.unlock-btn,
+.approve-btn {
     background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
     box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
 }
 
-.btn:focus, .unlock-btn:focus, .approve-btn:focus {
-    box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
-        0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
+.btn:focus,
+.unlock-btn:focus,
+.approve-btn:focus {
+    box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), 0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
     outline: 0;
 }
 
-.btn:active, .unlock-btn:active, .approve-btn:active {
+.btn:active,
+.unlock-btn:active,
+.approve-btn:active {
     background: linear-gradient(180deg, rgb(107, 163, 249) 0%, #4b91f7 100%);
 }
 
 /* 보조 버튼 (회색) */
-.btn-secondary, .back-btn, .pagination button {
+.btn-secondary,
+.back-btn,
+.pagination button {
     background: linear-gradient(180deg, rgb(100, 100, 100) 0%, rgb(90, 90, 90) 100%);
     box-shadow: 0px 0.5px 1.5px rgba(90, 90, 90, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
 }
 
-.btn-secondary:focus, .back-btn:focus, .pagination button:focus {
+.btn-secondary:focus,
+.back-btn:focus,
+.pagination button:focus {
     box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(90, 90, 90, 0.25), 0px 0px 0px 3.5px rgba(90, 90, 90, 0.5);
     outline: 0;
 }
 
-.btn-secondary:active, .back-btn:active, .pagination button:active {
+.btn-secondary:active,
+.back-btn:active,
+.pagination button:active {
     background: linear-gradient(180deg, rgb(120, 120, 120) 0%, rgb(100, 100, 100) 100%);
 }
 
 /* 위험 버튼 (빨간색) */
-.btn-danger, .deny-btn {
+.btn-danger,
+.deny-btn {
     background: linear-gradient(180deg, rgb(247, 75, 75) 0%, rgb(246, 54, 54) 100%);
     box-shadow: 0px 0.5px 1.5px rgba(246, 54, 54, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
 }
 
-.btn-danger:focus, .deny-btn:focus {
+.btn-danger:focus,
+.deny-btn:focus {
     box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(246, 54, 54, 0.25), 0px 0px 0px 3.5px rgba(217, 58, 58, 0.5);
     outline: 0;
 }
 
-.btn-danger:active, .deny-btn:active {
+.btn-danger:active,
+.deny-btn:active {
     background: linear-gradient(180deg, rgb(249, 107, 107) 0%, rgb(247, 75, 75) 100%);
 }
 
@@ -132,7 +152,14 @@ body {
 }
 
 /* 비활성화된 버튼 */
-.btn:disabled, .btn-secondary:disabled, .btn-danger:disabled, .btn-success:disabled, .unlock-btn:disabled, .approval-btn:disabled, .back-btn:disabled, .pagination button:disabled {
+.btn:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled,
+.btn-success:disabled,
+.unlock-btn:disabled,
+.approval-btn:disabled,
+.back-btn:disabled,
+.pagination button:disabled {
     background: linear-gradient(180deg, rgb(100, 100, 100) 0%, rgb(90, 90, 90) 100%);
     box-shadow: none;
     opacity: 0.6;
@@ -140,14 +167,14 @@ body {
 }
 
 /* 특수 버튼들 */
-.toggle-visibility, .copy-btn {
+.toggle-visibility {
     background: none;
     color: var(--text-secondary);
     padding: 5px;
     box-shadow: none;
 }
 
-.toggle-visibility:hover, .copy-btn:hover {
+.toggle-visibility:hover {
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
 }
@@ -177,7 +204,7 @@ body {
     width: 100%;
     padding: 12px;
     background-color: var(--bg-secondary);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 14px;
@@ -187,7 +214,7 @@ body {
 .input-group textarea:focus,
 .input-group select:focus {
     outline: none;
-    border-color: var(--accent);
+    background-color: var(--bg-tertiary);
 }
 
 .input-group input::placeholder {
@@ -342,6 +369,8 @@ body {
     max-height: 80vh;
     overflow-y: auto;
     border-radius: 8px;
+    border: 1px solid #333;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
@@ -594,8 +623,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
 }
 
 .page-title {
@@ -610,12 +640,6 @@ body {
 }
 
 /* Dashboard 페이지 스타일 */
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
 
 .dashboard-title {
     font-size: 28px;
@@ -627,7 +651,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .project-card {
@@ -693,14 +717,14 @@ body {
 
 .search-bar {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .search-input {
     width: 100%;
     padding: 12px 40px 12px 16px;
     background-color: var(--bg-secondary);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 14px;
@@ -708,7 +732,7 @@ body {
 
 .search-input:focus {
     outline: none;
-    border-color: var(--accent);
+    background-color: var(--bg-tertiary);
 }
 
 .search-icon {
@@ -720,6 +744,15 @@ body {
 }
 
 /* Logs 페이지 스타일 */
+
+.logs-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
 .filters {
     display: flex;
@@ -742,7 +775,7 @@ body {
 .filter-group select {
     padding: 8px 12px;
     background-color: var(--bg-secondary);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 14px;
@@ -750,13 +783,35 @@ body {
 
 .filter-group select:focus {
     outline: none;
-    border-color: var(--accent);
+    background-color: var(--bg-tertiary);
 }
 
 .logs-container {
     background-color: var(--bg-secondary);
-    overflow: hidden;
+    overflow-y: auto;
+    height: calc(100vh - 160px);
     border-radius: 8px;
+    margin: 0;
+    flex: 1;
+}
+
+/* 다크모드 스크롤바 */
+.logs-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+    background: var(--text-secondary);
+    border-radius: 4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-primary);
 }
 
 .log-item {
@@ -877,13 +932,13 @@ body {
 }
 
 .secrets-container {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .secret-item {
     background-color: var(--bg-secondary);
     padding: 20px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     border-radius: 8px;
 }
 
@@ -914,7 +969,8 @@ body {
 }
 
 .secret-value.masked {
-    filter: blur(5px);
+    color: transparent;
+    text-shadow: 0 0 15px rgba(224, 224, 224, 0.8);
     user-select: none;
 }
 
@@ -937,23 +993,6 @@ body {
 
 .toggle-visibility:hover {
     background-color: var(--bg-tertiary);
-}
-
-.copy-btn {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 5px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.copy-btn:hover {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
 }
 
 .export-section {
