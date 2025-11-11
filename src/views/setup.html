@@ -55,6 +55,30 @@
             </div>
         </div>
 
+        <!-- CLI 설치 모달 -->
+        <div id="cli-install-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Install CLI Tool</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Would you like to install the LocalKeys CLI tool? This allows you to use LocalKeys from the command line.</p>
+                    <div style="margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <strong>CLI Features:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Manage secrets from terminal</li>
+                            <li>Run commands with environment variables</li>
+                            <li>Automated workflows</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="skip-cli-install">Skip</button>
+                    <button class="btn" id="confirm-cli-install">Install CLI</button>
+                </div>
+            </div>
+        </div>
+
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const passwordInput = document.getElementById("password");
@@ -63,6 +87,9 @@
                 const setupForm = document.getElementById("setup-form");
                 const messageContainer = document.getElementById("message-container");
                 const strengthBar = document.getElementById("strength-bar");
+                const cliInstallModal = document.getElementById("cli-install-modal");
+                const skipCliInstall = document.getElementById("skip-cli-install");
+                const confirmCliInstall = document.getElementById("confirm-cli-install");
 
                 // 비밀번호 요구사항 요소
                 const reqLength = document.getElementById("req-length");
@@ -157,9 +184,71 @@
                     }, 3000);
                 }
 
+                // CLI 설치 모달 표시
+                function showCliInstallModal() {
+                    cliInstallModal.classList.remove("hidden");
+                    requestAnimationFrame(() => {
+                        cliInstallModal.classList.add("show");
+                    });
+                }
+
+                // CLI 설치 모달 숨기기
+                function hideCliInstallModal() {
+                    cliInstallModal.classList.remove("show");
+                    cliInstallModal.classList.add("closing");
+                    setTimeout(() => {
+                        cliInstallModal.classList.add("hidden");
+                        cliInstallModal.classList.remove("closing");
+                    }, 250);
+                }
+
+                // CLI 설치 처리
+                async function handleCliInstall() {
+                    try {
+                        confirmCliInstall.textContent = "Installing...";
+                        confirmCliInstall.disabled = true;
+
+                        const result = await window.localkeys.cli.install();
+
+                        if (result.success) {
+                            hideCliInstallModal();
+                            window.localkeys.navigate("dashboard");
+                        } else {
+                            showMessage(`CLI installation failed: ${result.error}`, "error");
+                            confirmCliInstall.textContent = "Install CLI";
+                            confirmCliInstall.disabled = false;
+                        }
+                    } catch (error) {
+                        showMessage(`CLI installation failed: ${error.message}`, "error");
+                        confirmCliInstall.textContent = "Install CLI";
+                        confirmCliInstall.disabled = false;
+                    }
+                }
+
                 // 이벤트 리스너
                 passwordInput.addEventListener("input", validateForm);
                 confirmPasswordInput.addEventListener("input", validateForm);
+
+                // CLI 설치 모달 이벤트 리스너
+                skipCliInstall.addEventListener("click", () => {
+                    hideCliInstallModal();
+                    window.localkeys.navigate("dashboard");
+                });
+
+                confirmCliInstall.addEventListener("click", handleCliInstall);
+
+                // 모달 외부 클릭 시 닫기
+                let mouseDownTarget = null;
+                document.addEventListener("mousedown", (e) => {
+                    mouseDownTarget = e.target;
+                });
+
+                cliInstallModal.addEventListener("click", (e) => {
+                    if (mouseDownTarget === cliInstallModal && e.target === cliInstallModal) {
+                        hideCliInstallModal();
+                        window.localkeys.navigate("dashboard");
+                    }
+                });
 
                 // 폼 제출
                 setupForm.addEventListener("submit", async function (e) {
@@ -180,10 +269,24 @@
                         const result = await window.localkeys.vault.setup(password);
 
                         if (result.success) {
-                            showMessage("Vault created successfully! Redirecting...", "success");
-                            setTimeout(() => {
-                                window.localkeys.navigate("dashboard");
-                            }, 1500);
+                            showMessage("Vault created successfully!", "success");
+
+                            // CLI 설치 제안
+                            setTimeout(async () => {
+                                try {
+                                    const cliResult = await window.localkeys.cli.check();
+                                    if (!cliResult.installed) {
+                                        // CLI 설치 모달 표시
+                                        showCliInstallModal();
+                                    } else {
+                                        // CLI 이미 설치됨
+                                        window.localkeys.navigate("dashboard");
+                                    }
+                                } catch (error) {
+                                    // CLI 상태 확인 실패 시 그냥 대시보드로 이동
+                                    window.localkeys.navigate("dashboard");
+                                }
+                            }, 1000);
                         } else {
                             showMessage(`Failed to create vault: ${result.error}`, "error");
                             setupBtn.disabled = false;

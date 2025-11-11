@@ -41,6 +41,13 @@ const api = {
         quit: () => ipcRenderer.invoke("app:quit"),
     },
 
+    // CLI 관리
+    cli: {
+        install: () => ipcRenderer.invoke("cli:install"),
+        uninstall: () => ipcRenderer.invoke("cli:uninstall"),
+        check: () => ipcRenderer.invoke("cli:check"),
+    },
+
     // 승인 다이얼로그
     approval: {
         onResponse: (callback) => ipcRenderer.on("approval:response", callback),

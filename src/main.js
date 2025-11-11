@@ -125,6 +125,67 @@ function initializeApp() {
 
     // 트레이 아이콘 생성
     createTray();
+
+    // CLI 자동 설치 시도 (백그라운드에서 조용히)
+    try {
+        const { spawn } = require("child_process");
+        const path = require("path");
+        const os = require("os");
+        const cliPath = path.join(__dirname, "..", "cli", "localkeys.js");
+
+        // CLI 파일이 존재하면 자동으로 설치 시도
+        if (fs.existsSync(cliPath)) {
+            // 실행 권한 부여 (Unix 계열만)
+            if (os.platform() !== "win32") {
+                try {
+                    fs.chmodSync(cliPath, "755");
+                } catch (error) {
+                    // 권한 설정 실패 시 무시
+                }
+            }
+
+            // 독립 CLI 자동 설치 시도 (silent)
+            try {
+                const cliPath = path.join(__dirname, "..", "cli", "localkeys.js");
+                const createStandaloneCli = (cliJsPath, electronPath) => {
+                    if (os.platform() === "win32") {
+                        return `@echo off
+set ELECTRON_RUN_AS_NODE=1
+"${electronPath}" "${cliJsPath}" %*`;
+                    } else {
+                        return `#!/bin/bash
+ELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliJsPath}" "$@"`;
+                    }
+                };
+
+                const homeDir = os.homedir();
+                let targetDir = null;
+
+                if (os.platform() === "win32") {
+                    targetDir = path.join(homeDir, "bin");
+                } else {
+                    targetDir = path.join(homeDir, ".local", "bin");
+                }
+
+                if (!fs.existsSync(targetDir)) {
+                    fs.mkdirSync(targetDir, { recursive: true });
+                }
+
+                const targetPath = path.join(targetDir, os.platform() === "win32" ? "localkeys.cmd" : "localkeys");
+                const standaloneContent = createStandaloneCli(cliPath, process.execPath);
+
+                fs.writeFileSync(targetPath, standaloneContent);
+
+                if (os.platform() !== "win32") {
+                    fs.chmodSync(targetPath, "755");
+                }
+            } catch (error) {
+                // 설치 실패 시 무시
+            }
+        }
+    } catch (error) {
+        // CLI 자동 설치 실패 시 무시
+    }
 }
 
 // 자동 잠금 타이머 설정
@@ -414,6 +475,221 @@ function setupIpcHandlers() {
         try {
             await vault.saveNow();
             return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // CLI 설치
+    ipcMain.handle("cli:install", async () => {
+        const fs = require("fs");
+        const path = require("path");
+        const os = require("os");
+
+        try {
+            const cliPath = path.join(__dirname, "..", "cli", "localkeys.js");
+            if (!fs.existsSync(cliPath)) {
+                return { success: false, error: "CLI file not found" };
+            }
+
+            // Unix 권한 설정
+            if (os.platform() !== "win32") {
+                try { fs.chmodSync(cliPath, "755"); } catch {}
+            }
+
+            // CLI 생성 함수
+            const createCliScript = (electronPath) => os.platform() === "win32"
+                ? `@echo off\nset ELECTRON_RUN_AS_NODE=1\n"${electronPath}" "${cliPath}" %*`
+                : `#!/bin/bash\nELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliPath}" "$@"`;
+
+            // 설치 경로 목록
+            const homeDir = os.homedir();
+            const installPaths = os.platform() === "win32"
+                ? [
+                    path.join(process.env.LOCALAPPDATA || path.join(homeDir, "AppData", "Local"), "Microsoft", "WindowsApps"),
+                    path.join(process.env.APPDATA || path.join(homeDir, "AppData", "Roaming"), "npm"),
+                    path.join(homeDir, "bin")
+                ]
+                : [path.join(homeDir, ".local", "bin")];
+
+            // PATH에서 추가 사용자 디렉토리 찾기
+            const pathEnv = process.env.PATH || "";
+            const pathSeparator = os.platform() === "win32" ? ';' : ':';
+            for (const dir of pathEnv.split(pathSeparator)) {
+                if (dir && fs.existsSync(dir) && dir.includes(homeDir) && !installPaths.includes(dir)) {
+                    installPaths.push(dir);
+                }
+            }
+
+            // 설치 시도
+            for (const dir of installPaths) {
+                try {
+                    if (!fs.existsSync(dir)) {
+                        if (dir === path.join(homeDir, ".local", "bin")) {
+                            fs.mkdirSync(dir, { recursive: true });
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    // 쓰기 권한 확인
+                    const testFile = path.join(dir, ".localkeys-test");
+                    fs.writeFileSync(testFile, "test");
+                    fs.unlinkSync(testFile);
+
+                    const cliName = os.platform() === "win32" ? "localkeys.cmd" : "localkeys";
+                    const targetPath = path.join(dir, cliName);
+
+                    // 기존 파일 제거
+                    if (fs.existsSync(targetPath)) {
+                        fs.unlinkSync(targetPath);
+                    }
+
+                    // CLI 스크립트 생성
+                    fs.writeFileSync(targetPath, createCliScript(process.execPath));
+
+                    // 실행 권한 설정
+                    try { fs.chmodSync(targetPath, "755"); } catch {}
+
+                    const pathInfo = ` at ${targetPath}`;
+                    return { success: true, message: `CLI installed successfully${pathInfo}` };
+                } catch {
+                    continue;
+                }
+            }
+
+            return { success: false, error: "CLI installation failed: Cannot find suitable path" };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // CLI 설치 상태 확인
+    ipcMain.handle("cli:check", async () => {
+        try {
+            const fs = require("fs");
+            const path = require("path");
+            const os = require("os");
+
+            // PATH 환경변수에서 CLI 파일 직접 확인
+            const checkCliInPath = () => {
+                try {
+                    const pathEnv = process.env.PATH || "";
+                    const pathSeparator = os.platform() === "win32" ? ';' : ':';
+                    const pathDirs = pathEnv.split(pathSeparator);
+
+                    const cliNames = os.platform() === "win32"
+                        ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"]
+                        : ["localkeys"];
+
+                    for (const dir of pathDirs) {
+                        if (!dir || !fs.existsSync(dir)) continue;
+
+                        for (const cliName of cliNames) {
+                            const cliPath = path.join(dir, cliName);
+                            if (fs.existsSync(cliPath)) {
+                                return { installed: true, path: cliPath };
+                            }
+                        }
+                    }
+
+                    return { installed: false };
+                } catch (error) {
+                    return { installed: false };
+                }
+            };
+
+            return checkCliInPath();
+        } catch (error) {
+            return { installed: false };
+        }
+    });
+
+    // CLI 제거
+    ipcMain.handle("cli:uninstall", async () => {
+        try {
+            const fs = require("fs");
+            const path = require("path");
+            const os = require("os");
+
+            // PATH에서 직접 CLI 파일 찾아서 제거
+            const findAndRemoveCli = () => {
+                try {
+                    const pathEnv = process.env.PATH || "";
+                    const pathSeparator = os.platform() === "win32" ? ';' : ':';
+                    const pathDirs = pathEnv.split(pathSeparator);
+
+                    const cliNames = os.platform() === "win32"
+                        ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"]
+                        : ["localkeys"];
+
+                    let removed = false;
+                    const removedPaths = [];
+
+                    for (const dir of pathDirs) {
+                        if (!dir || !fs.existsSync(dir)) continue;
+
+                        for (const cliName of cliNames) {
+                            const cliPath = path.join(dir, cliName);
+                            if (fs.existsSync(cliPath)) {
+                                try {
+                                    fs.unlinkSync(cliPath);
+                                    removed = true;
+                                    removedPaths.push(cliPath);
+                                    console.log(`Removed CLI from: ${cliPath}`);
+                                } catch (error) {
+                                    console.log(`Failed to remove ${cliPath}: ${error.message}`);
+                                }
+                            }
+                        }
+                    }
+
+                    // Windows에서 추가 가능한 파일들 확인
+                    if (os.platform() === "win32") {
+                        const extraDirs = [
+                            path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Microsoft", "WindowsApps"),
+                            path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "npm")
+                        ];
+
+                        for (const dir of extraDirs) {
+                            if (!fs.existsSync(dir)) continue;
+
+                            for (const cliName of ["localkeys.cmd", "localkeys.bat", "localkeys.ps1"]) {
+                                const cliPath = path.join(dir, cliName);
+                                if (fs.existsSync(cliPath)) {
+                                    try {
+                                        fs.unlinkSync(cliPath);
+                                        removed = true;
+                                        removedPaths.push(cliPath);
+                                        console.log(`Removed CLI from: ${cliPath}`);
+                                    } catch (error) {
+                                        console.log(`Failed to remove ${cliPath}: ${error.message}`);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    return { removed, removedPaths };
+                } catch (error) {
+                    console.log(`Error during CLI removal: ${error.message}`);
+                    return { removed: false, removedPaths: [] };
+                }
+            };
+
+            const result = findAndRemoveCli();
+
+            if (result.removed) {
+                return {
+                    success: true,
+                    message: `CLI uninstalled successfully from ${result.removedPaths.length} location(s)`
+                };
+            } else {
+                return {
+                    success: true,
+                    message: "CLI not found in PATH. Already uninstalled or not installed."
+                };
+            }
         } catch (error) {
             return { success: false, error: error.message };
         }

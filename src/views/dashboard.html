@@ -12,6 +12,7 @@
                 <h1 class="page-title dashboard-title">Projects</h1>
                 <div class="header-actions">
                     <button class="btn" id="add-project-btn">Add Project</button>
+                    <button class="btn btn-secondary" id="install-cli-btn">Install CLI</button>
                     <button class="btn btn-secondary" id="logs-btn">Logs</button>
                     <button class="btn btn-secondary" id="lock-btn">Lock</button>
                 </div>
@@ -58,6 +59,7 @@
                 const addProjectBtn = document.getElementById("add-project-btn");
                 const logsBtn = document.getElementById("logs-btn");
                 const lockBtn = document.getElementById("lock-btn");
+                const installCliBtn = document.getElementById("install-cli-btn");
                 const addProjectModal = document.getElementById("add-project-modal");
                 const projectNameInput = document.getElementById("project-name");
                 const cancelAddProject = document.getElementById("cancel-add-project");
@@ -305,8 +307,77 @@
                     }
                 });
 
+                // CLI 버튼 상태 관리
+                const setCliButtonState = (text, disabled, opacity, onclick) => {
+                    installCliBtn.textContent = text;
+                    installCliBtn.disabled = disabled;
+                    installCliBtn.style.opacity = opacity;
+                    installCliBtn.onclick = onclick;
+                };
+
+                // CLI 작업 처리 (설치/제거)
+                async function handleCliAction(action) {
+                    try {
+                        const isInstalling = action === 'install';
+                        const loadingText = isInstalling ? "Installing..." : "Uninstalling...";
+                        const apiMethod = isInstalling ? window.localkeys.cli.install : window.localkeys.cli.uninstall;
+                        const successPrefix = isInstalling ? "installation" : "uninstallation";
+
+                        setCliButtonState(loadingText, true, "0.6", null);
+
+                        const result = await apiMethod();
+
+                        if (result.success) {
+                            notificationManager.success(result.message);
+                            await checkCliStatus();
+                        } else {
+                            notificationManager.error(result.error);
+                            setCliButtonState(
+                                isInstalling ? "Install CLI" : "Uninstall CLI",
+                                false,
+                                "1",
+                                isInstalling ? installCli : uninstallCli
+                            );
+                        }
+                    } catch (error) {
+                        const actionName = action === 'install' ? 'installation' : 'uninstallation';
+                        notificationManager.error(`CLI ${actionName} failed: ${error.message}`);
+                        setCliButtonState(
+                            action === 'install' ? "Install CLI" : "Uninstall CLI",
+                            false,
+                            "1",
+                            action === 'install' ? installCli : uninstallCli
+                        );
+                    }
+                }
+
+                // CLI 설치 상태 확인
+                async function checkCliStatus() {
+                    try {
+                        const result = await window.localkeys.cli.check();
+                        if (result.installed) {
+                            setCliButtonState("Uninstall CLI", false, "1", () => handleCliAction('uninstall'));
+                        } else {
+                            setCliButtonState("Install CLI", false, "1", () => handleCliAction('install'));
+                        }
+                    } catch (error) {
+                        setCliButtonState("Install CLI", false, "1", () => handleCliAction('install'));
+                    }
+                }
+
+                // CLI 설치 함수
+                const installCli = () => handleCliAction('install');
+
+                // CLI 제거 함수
+                const uninstallCli = () => {
+                    if (confirm("Are you sure you want to uninstall the LocalKeys CLI?")) {
+                        handleCliAction('uninstall');
+                    }
+                };
+
                 // 초기 로드
                 loadProjects();
+                checkCliStatus();
             });
         </script>
     </body>
