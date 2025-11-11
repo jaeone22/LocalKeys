@@ -581,6 +581,11 @@ function setupIpcHandlers() {
                                             configFileUpdated = true;
                                             updatedConfig = path.basename(configPath);
                                             break;
+                                        } else {
+                                            // 이미 PATH가 있는 경우 성공으로 처리
+                                            configFileUpdated = true;
+                                            updatedConfig = path.basename(configPath);
+                                            break;
                                         }
                                     }
                                 } catch (error) {
@@ -592,13 +597,25 @@ function setupIpcHandlers() {
                             if (configFileUpdated) {
                                 return {
                                     success: true,
-                                    message: `CLI installed successfully${pathInfo}. Please restart your terminal.`
+                                    message: `CLI installed successfully.`
                                 };
                             } else {
-                                return {
-                                    success: true,
-                                    message: `CLI installed successfully${pathInfo}. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`
-                                };
+                                // 셸 설정 파일이 없는 경우 새로 생성
+                                try {
+                                    const defaultConfig = os.platform() === 'darwin' ? '.zshrc' : '.bashrc';
+                                    const configPath = path.join(homeDir, defaultConfig);
+
+                                    fs.writeFileSync(configPath, pathLine.trim() + '\n');
+                                    return {
+                                        success: true,
+                                        message: `CLI installed successfully.`
+                                    };
+                                } catch (error) {
+                                    return {
+                                        success: true,
+                                        message: `CLI installed successfully. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`
+                                    };
+                                }
                             }
                         } catch (error) {
                             // PATH 추가 실패해도 CLI 설치는 성공
@@ -628,12 +645,20 @@ function setupIpcHandlers() {
             const path = require("path");
             const os = require("os");
 
-            // PATH 환경변수에서 CLI 파일 직접 확인
+            // PATH 환경변수에서 CLI 파일 직접 확인 + 기본 설치 경로도 확인
             const checkCliInPath = () => {
                 try {
                     const pathEnv = process.env.PATH || "";
                     const pathSeparator = os.platform() === "win32" ? ';' : ':';
-                    const pathDirs = pathEnv.split(pathSeparator);
+                    let pathDirs = pathEnv.split(pathSeparator);
+
+                    // 맥/리눅스의 경우 ~/.local/bin도 확인
+                    if (os.platform() !== "win32") {
+                        const localBinPath = path.join(os.homedir(), ".local", "bin");
+                        if (!pathDirs.includes(localBinPath)) {
+                            pathDirs.push(localBinPath);
+                        }
+                    }
 
                     const cliNames = os.platform() === "win32"
                         ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"]
@@ -669,12 +694,20 @@ function setupIpcHandlers() {
             const path = require("path");
             const os = require("os");
 
-            // PATH에서 직접 CLI 파일 찾아서 제거
+            // PATH와 기본 설치 경로에서 CLI 파일 찾아서 제거
             const findAndRemoveCli = () => {
                 try {
                     const pathEnv = process.env.PATH || "";
                     const pathSeparator = os.platform() === "win32" ? ';' : ':';
-                    const pathDirs = pathEnv.split(pathSeparator);
+                    let pathDirs = pathEnv.split(pathSeparator);
+
+                    // 맥/리눅스의 경우 ~/.local/bin도 확인
+                    if (os.platform() !== "win32") {
+                        const localBinPath = path.join(os.homedir(), ".local", "bin");
+                        if (!pathDirs.includes(localBinPath)) {
+                            pathDirs.push(localBinPath);
+                        }
+                    }
 
                     const cliNames = os.platform() === "win32"
                         ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"]
@@ -734,19 +767,70 @@ function setupIpcHandlers() {
                 }
             };
 
-            const result = findAndRemoveCli();
+            // PATH에서 LocalKeys 관련 설정 제거
+            const removeFromPath = () => {
+                if (os.platform() === "win32") return; // Windows는 건드리지 않음
 
-            if (result.removed) {
-                return {
-                    success: true,
-                    message: `CLI uninstalled successfully from ${result.removedPaths.length} location(s)`
-                };
+                try {
+                    const homeDir = os.homedir();
+                    const shellConfigs = [
+                        path.join(homeDir, ".zshrc"),
+                        path.join(homeDir, ".bashrc"),
+                        path.join(homeDir, ".bash_profile"),
+                        path.join(homeDir, ".profile")
+                    ];
+
+                    const localBinPath = path.join(homeDir, ".local", "bin");
+                    let pathRemoved = false;
+                    let modifiedConfigs = [];
+
+                    for (const configPath of shellConfigs) {
+                        try {
+                            if (fs.existsSync(configPath)) {
+                                let content = fs.readFileSync(configPath, 'utf8');
+                                const originalContent = content;
+
+                                // LocalKeys 관련 PATH 라인 제거
+                                const lines = content.split('\n');
+                                const filteredLines = lines.filter(line =>
+                                    !line.includes(localBinPath) &&
+                                    !line.includes('# LocalKeys CLI')
+                                );
+
+                                if (lines.length !== filteredLines.length) {
+                                    content = filteredLines.join('\n').replace(/\n{3,}/g, '\n\n');
+                                    fs.writeFileSync(configPath, content);
+                                    pathRemoved = true;
+                                    modifiedConfigs.push(path.basename(configPath));
+                                }
+                            }
+                        } catch (error) {
+                            // 다음 파일 시도
+                            continue;
+                        }
+                    }
+
+                    return { pathRemoved, modifiedConfigs };
+                } catch (error) {
+                    return { pathRemoved: false, modifiedConfigs: [] };
+                }
+            };
+
+            const result = findAndRemoveCli();
+            const pathResult = removeFromPath();
+
+            let message = "";
+            if (result.removed && pathResult.pathRemoved) {
+                message = `CLI uninstalled successfully.`;
+            } else if (result.removed) {
+                message = `CLI uninstalled successfully.`;
+            } else if (pathResult.pathRemoved) {
+                message = `CLI uninstalled successfully.`;
             } else {
-                return {
-                    success: true,
-                    message: "CLI not found in PATH. Already uninstalled or not installed."
-                };
+                message = "CLI not found. Already uninstalled or not installed.";
             }
+
+            return { success: true, message };
         } catch (error) {
             return { success: false, error: error.message };
         }
