@@ -21,6 +21,44 @@ let isQuitting = false;
 // LocalKeys 데이터 디렉토리 경로
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
 
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+const APP_VERSION = "0.1";
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+// 앱 버전 정보
+
 // 트레이 아이콘 생성
 function createTray() {
     // 트레이 아이콘이 이미 있으면 제거
@@ -104,6 +142,341 @@ function createTray() {
     tray.setContextMenu(contextMenu);
 }
 
+// 버전 체커 함수
+async function checkVersion() {
+    try {
+        const https = require("https");
+        const { URL } = require("url");
+
+        return new Promise((resolve, reject) => {
+            const url = new URL("https://localkeys.privatestater.com/api/version");
+
+            const options = {
+                method: "GET",
+                timeout: 5000,
+                headers: {
+                    "User-Agent": `LocalKeys-App/${APP_VERSION}`,
+                },
+            };
+
+            const req = https.request(url, options, (res) => {
+                let data = "";
+
+                res.on("data", (chunk) => {
+                    data += chunk;
+                });
+
+                res.on("end", () => {
+                    try {
+                        if (res.statusCode === 200) {
+                            const response = JSON.parse(data);
+                            resolve(response.version !== APP_VERSION ? response.version : null);
+                        } else {
+                            resolve(null);
+                        }
+                    } catch (error) {
+                        resolve(null);
+                    }
+                });
+            });
+
+            req.on("error", () => {
+                resolve(null); // 에러 시 업데이트 없음
+            });
+
+            req.on("timeout", () => {
+                req.destroy();
+                resolve(null); // 타임아웃 시 업데이트 없음
+            });
+
+            req.end();
+        });
+    } catch (error) {
+        return null; // 예외 발생 시 업데이트 없음
+    }
+}
+
+// 베타 체커 함수
+async function checkBetaStatus() {
+    try {
+        const https = require("https");
+        const { URL } = require("url");
+
+        return new Promise((resolve, reject) => {
+            const url = new URL("https://id.privatestater.com/api/betachecker/localkeys");
+
+            const options = {
+                method: "GET",
+                timeout: 5000,
+                headers: {
+                    "User-Agent": "LocalKeys-App/1.0",
+                },
+            };
+
+            const req = https.request(url, options, (res) => {
+                resolve(res.statusCode === 200); // 200이면 베타 종료
+            });
+
+            req.on("error", () => {
+                resolve(false); // 에러 시 베타 계속 진행
+            });
+
+            req.on("timeout", () => {
+                req.destroy();
+                resolve(false); // 타임아웃 시 베타 계속 진행
+            });
+
+            req.end();
+        });
+    } catch (error) {
+        return false; // 예외 발생 시 베타 계속 진행
+    }
+}
+
+// 베타 종료 알림창 표시
+function showBetaEndDialog() {
+    const { BrowserWindow } = require("electron");
+
+    const betaEndWindow = new BrowserWindow({
+        width: 450,
+        height: 280,
+        parent: mainWindow,
+        modal: true,
+        frame: false,
+        alwaysOnTop: true,
+        resizable: false,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+        },
+        icon: path.join(__dirname, "assets", "icon.png"),
+    });
+
+    // 베타 종료 알림창 HTML 생성
+    const betaEndHTML = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>LocalKeys</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background-color: #1a1a1a;
+                color: #e0e0e0;
+                margin: 0;
+                padding: 30px;
+                text-align: center;
+                height: 100vh;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+            .title {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: #e0e0e0;
+            }
+            .description {
+                color: #a0a0a0;
+                line-height: 1.5;
+                margin-bottom: 25px;
+            }
+            .actions {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+            }
+            .btn {
+                padding: 12px 24px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                cursor: pointer;
+                border: none;
+                font-size: 14px;
+            }
+            .btn-primary {
+                background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
+                color: white;
+            }
+            .btn-primary:hover {
+                background: linear-gradient(180deg, rgb(107, 163, 249) 0%, #4b91f7 100%);
+            }
+            .btn-secondary {
+                background: #303030;
+                color: #a0a0a0;
+            }
+            .btn-secondary:hover {
+                background: #212121;
+                color: #e0e0e0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="title">🎉 Beta Has Ended!</div>
+        <div class="description">
+            Thank you for participating in the LocalKeys beta.<br>
+            The stable version is now available.
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" onclick="openOfficialSite()">Buy LocalKeys</button>
+            <button class="btn btn-secondary" onclick="closeDialog()">Continue Anyway</button>
+        </div>
+        <script>
+            function openOfficialSite() {
+                // 새 창으로 링크 열기
+                window.open('https://localkeys.privatestater.com', '_blank');
+                closeDialog();
+            }
+
+            function closeDialog() {
+                window.close();
+            }
+        </script>
+    </body>
+    </html>`;
+
+    betaEndWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(betaEndHTML)}`);
+
+    // 새 창에서 링크 열기 처리
+    betaEndWindow.webContents.setWindowOpenHandler(({ url }) => {
+        require("electron").shell.openExternal(url);
+        return { action: "deny" };
+    });
+
+    // 창이 닫힐 때 처리
+    betaEndWindow.on("closed", () => {
+        betaEndWindow = null;
+    });
+}
+
+// 업데이트 알림창 표시
+function showUpdateDialog(newVersion) {
+    const { BrowserWindow } = require("electron");
+
+    const updateWindow = new BrowserWindow({
+        width: 450,
+        height: 300,
+        parent: mainWindow,
+        modal: true,
+        frame: false,
+        alwaysOnTop: true,
+        resizable: false,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+        },
+        icon: path.join(__dirname, "assets", "icon.png"),
+    });
+
+    // 업데이트 알림창 HTML 생성
+    const updateHTML = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>LocalKeys</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background-color: #1a1a1a;
+                color: #e0e0e0;
+                margin: 0;
+                padding: 30px;
+                text-align: center;
+                height: 100vh;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+            .title {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: #e0e0e0;
+            }
+            .description {
+                color: #a0a0a0;
+                line-height: 1.5;
+                margin-bottom: 25px;
+            }
+            .actions {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+            }
+            .btn {
+                padding: 12px 24px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-weight: 500;
+                cursor: pointer;
+                border: none;
+                font-size: 14px;
+            }
+            .btn-primary {
+                background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
+                color: white;
+            }
+            .btn-primary:hover {
+                background: linear-gradient(180deg, rgb(107, 163, 249) 0%, #4b91f7 100%);
+            }
+            .btn-secondary {
+                background: #303030;
+                color: #a0a0a0;
+            }
+            .btn-secondary:hover {
+                background: #212121;
+                color: #e0e0e0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="title">Update Available (${newVersion})</div>
+        <div class="description">
+            Click the update button to see more details.
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" onclick="openUpdatePage()">Update</button>
+            <button class="btn btn-secondary" onclick="closeDialog()">Skip</button>
+        </div>
+        <script>
+            function openUpdatePage() {
+                // 새 창으로 업데이트 페이지 열기
+                window.open('https://localkeys.privatestater.com/update', '_blank');
+                closeDialog();
+            }
+
+            function closeDialog() {
+                window.close();
+            }
+        </script>
+    </body>
+    </html>`;
+
+    updateWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(updateHTML)}`);
+
+    // 새 창에서 링크 열기 처리
+    updateWindow.webContents.setWindowOpenHandler(({ url }) => {
+        require("electron").shell.openExternal(url);
+        return { action: "deny" };
+    });
+
+    // 창이 닫힐 때 처리
+    updateWindow.on("closed", () => {
+        updateWindow = null;
+    });
+}
+
 // 앱 초기화
 function initializeApp() {
     // 데이터 디렉토리 생성
@@ -125,6 +498,26 @@ function initializeApp() {
 
     // 트레이 아이콘 생성
     createTray();
+
+    // 버전 체크 (백그라운드에서)
+    checkVersion().then((newVersion) => {
+        if (newVersion && mainWindow) {
+            // 새 버전이 있으면 업데이트 알림창 표시
+            setTimeout(() => {
+                showUpdateDialog(newVersion);
+            }, 2000); // 앱이 완전히 로드된 후 표시
+        }
+    });
+
+    // 베타 상태 확인 (백그라운드에서)
+    checkBetaStatus().then((isBetaEnded) => {
+        if (isBetaEnded && mainWindow) {
+            // 베타가 종료되었으면 알림창 표시
+            setTimeout(() => {
+                showBetaEndDialog();
+            }, 2000); // 앱이 완전히 로드된 후 표시
+        }
+    });
 
     // CLI 자동 설치 시도 (백그라운드에서 조용히)
     try {
@@ -494,27 +887,29 @@ function setupIpcHandlers() {
 
             // Unix 권한 설정
             if (os.platform() !== "win32") {
-                try { fs.chmodSync(cliPath, "755"); } catch {}
+                try {
+                    fs.chmodSync(cliPath, "755");
+                } catch {}
             }
 
             // CLI 생성 함수
-            const createCliScript = (electronPath) => os.platform() === "win32"
-                ? `@echo off\nset ELECTRON_RUN_AS_NODE=1\n"${electronPath}" "${cliPath}" %*`
-                : `#!/bin/bash\nELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliPath}" "$@"`;
+            const createCliScript = (electronPath) =>
+                os.platform() === "win32" ? `@echo off\nset ELECTRON_RUN_AS_NODE=1\n"${electronPath}" "${cliPath}" %*` : `#!/bin/bash\nELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliPath}" "$@"`;
 
             // 설치 경로 목록
             const homeDir = os.homedir();
-            const installPaths = os.platform() === "win32"
-                ? [
-                    path.join(process.env.LOCALAPPDATA || path.join(homeDir, "AppData", "Local"), "Microsoft", "WindowsApps"),
-                    path.join(process.env.APPDATA || path.join(homeDir, "AppData", "Roaming"), "npm"),
-                    path.join(homeDir, "bin")
-                ]
-                : [path.join(homeDir, ".local", "bin")];
+            const installPaths =
+                os.platform() === "win32"
+                    ? [
+                          path.join(process.env.LOCALAPPDATA || path.join(homeDir, "AppData", "Local"), "Microsoft", "WindowsApps"),
+                          path.join(process.env.APPDATA || path.join(homeDir, "AppData", "Roaming"), "npm"),
+                          path.join(homeDir, "bin"),
+                      ]
+                    : [path.join(homeDir, ".local", "bin")];
 
             // PATH에서 추가 사용자 디렉토리 찾기
             const pathEnv = process.env.PATH || "";
-            const pathSeparator = os.platform() === "win32" ? ';' : ':';
+            const pathSeparator = os.platform() === "win32" ? ";" : ":";
             for (const dir of pathEnv.split(pathSeparator)) {
                 if (dir && fs.existsSync(dir) && dir.includes(homeDir) && !installPaths.includes(dir)) {
                     installPaths.push(dir);
@@ -549,7 +944,9 @@ function setupIpcHandlers() {
                     fs.writeFileSync(targetPath, createCliScript(process.execPath));
 
                     // 실행 권한 설정
-                    try { fs.chmodSync(targetPath, "755"); } catch {}
+                    try {
+                        fs.chmodSync(targetPath, "755");
+                    } catch {}
 
                     const pathInfo = ` at ${targetPath}`;
 
@@ -557,12 +954,7 @@ function setupIpcHandlers() {
                     if (os.platform() !== "win32") {
                         try {
                             const homeDir = os.homedir();
-                            const shellConfigs = [
-                                path.join(homeDir, ".zshrc"),
-                                path.join(homeDir, ".bashrc"),
-                                path.join(homeDir, ".bash_profile"),
-                                path.join(homeDir, ".profile")
-                            ];
+                            const shellConfigs = [path.join(homeDir, ".zshrc"), path.join(homeDir, ".bashrc"), path.join(homeDir, ".bash_profile"), path.join(homeDir, ".profile")];
 
                             const localBinPath = path.join(homeDir, ".local", "bin");
                             const pathLine = `\n# LocalKeys CLI\nexport PATH="$PATH:${localBinPath}"\n`;
@@ -573,7 +965,7 @@ function setupIpcHandlers() {
                             for (const configPath of shellConfigs) {
                                 try {
                                     if (fs.existsSync(configPath)) {
-                                        const content = fs.readFileSync(configPath, 'utf8');
+                                        const content = fs.readFileSync(configPath, "utf8");
 
                                         // 이미 PATH가 추가되어 있는지 확인
                                         if (!content.includes(localBinPath)) {
@@ -597,23 +989,23 @@ function setupIpcHandlers() {
                             if (configFileUpdated) {
                                 return {
                                     success: true,
-                                    message: `CLI installed successfully.`
+                                    message: `CLI installed successfully.`,
                                 };
                             } else {
                                 // 셸 설정 파일이 없는 경우 새로 생성
                                 try {
-                                    const defaultConfig = os.platform() === 'darwin' ? '.zshrc' : '.bashrc';
+                                    const defaultConfig = os.platform() === "darwin" ? ".zshrc" : ".bashrc";
                                     const configPath = path.join(homeDir, defaultConfig);
 
-                                    fs.writeFileSync(configPath, pathLine.trim() + '\n');
+                                    fs.writeFileSync(configPath, pathLine.trim() + "\n");
                                     return {
                                         success: true,
-                                        message: `CLI installed successfully.`
+                                        message: `CLI installed successfully.`,
                                     };
                                 } catch (error) {
                                     return {
                                         success: true,
-                                        message: `CLI installed successfully. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`
+                                        message: `CLI installed successfully. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`,
                                     };
                                 }
                             }
@@ -621,7 +1013,7 @@ function setupIpcHandlers() {
                             // PATH 추가 실패해도 CLI 설치는 성공
                             return {
                                 success: true,
-                                message: `CLI installed successfully${pathInfo}. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`
+                                message: `CLI installed successfully${pathInfo}. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`,
                             };
                         }
                     }
@@ -649,7 +1041,7 @@ function setupIpcHandlers() {
             const checkCliInPath = () => {
                 try {
                     const pathEnv = process.env.PATH || "";
-                    const pathSeparator = os.platform() === "win32" ? ';' : ':';
+                    const pathSeparator = os.platform() === "win32" ? ";" : ":";
                     let pathDirs = pathEnv.split(pathSeparator);
 
                     // 맥/리눅스의 경우 ~/.local/bin도 확인
@@ -660,9 +1052,7 @@ function setupIpcHandlers() {
                         }
                     }
 
-                    const cliNames = os.platform() === "win32"
-                        ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"]
-                        : ["localkeys"];
+                    const cliNames = os.platform() === "win32" ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"] : ["localkeys"];
 
                     for (const dir of pathDirs) {
                         if (!dir || !fs.existsSync(dir)) continue;
@@ -698,7 +1088,7 @@ function setupIpcHandlers() {
             const findAndRemoveCli = () => {
                 try {
                     const pathEnv = process.env.PATH || "";
-                    const pathSeparator = os.platform() === "win32" ? ';' : ':';
+                    const pathSeparator = os.platform() === "win32" ? ";" : ":";
                     let pathDirs = pathEnv.split(pathSeparator);
 
                     // 맥/리눅스의 경우 ~/.local/bin도 확인
@@ -709,9 +1099,7 @@ function setupIpcHandlers() {
                         }
                     }
 
-                    const cliNames = os.platform() === "win32"
-                        ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"]
-                        : ["localkeys"];
+                    const cliNames = os.platform() === "win32" ? ["localkeys.cmd", "localkeys.bat", "localkeys.exe", "localkeys"] : ["localkeys"];
 
                     let removed = false;
                     const removedPaths = [];
@@ -738,7 +1126,7 @@ function setupIpcHandlers() {
                     if (os.platform() === "win32") {
                         const extraDirs = [
                             path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Microsoft", "WindowsApps"),
-                            path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "npm")
+                            path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "npm"),
                         ];
 
                         for (const dir of extraDirs) {
@@ -773,12 +1161,7 @@ function setupIpcHandlers() {
 
                 try {
                     const homeDir = os.homedir();
-                    const shellConfigs = [
-                        path.join(homeDir, ".zshrc"),
-                        path.join(homeDir, ".bashrc"),
-                        path.join(homeDir, ".bash_profile"),
-                        path.join(homeDir, ".profile")
-                    ];
+                    const shellConfigs = [path.join(homeDir, ".zshrc"), path.join(homeDir, ".bashrc"), path.join(homeDir, ".bash_profile"), path.join(homeDir, ".profile")];
 
                     const localBinPath = path.join(homeDir, ".local", "bin");
                     let pathRemoved = false;
@@ -787,18 +1170,15 @@ function setupIpcHandlers() {
                     for (const configPath of shellConfigs) {
                         try {
                             if (fs.existsSync(configPath)) {
-                                let content = fs.readFileSync(configPath, 'utf8');
+                                let content = fs.readFileSync(configPath, "utf8");
                                 const originalContent = content;
 
                                 // LocalKeys 관련 PATH 라인 제거
-                                const lines = content.split('\n');
-                                const filteredLines = lines.filter(line =>
-                                    !line.includes(localBinPath) &&
-                                    !line.includes('# LocalKeys CLI')
-                                );
+                                const lines = content.split("\n");
+                                const filteredLines = lines.filter((line) => !line.includes(localBinPath) && !line.includes("# LocalKeys CLI"));
 
                                 if (lines.length !== filteredLines.length) {
-                                    content = filteredLines.join('\n').replace(/\n{3,}/g, '\n\n');
+                                    content = filteredLines.join("\n").replace(/\n{3,}/g, "\n\n");
                                     fs.writeFileSync(configPath, content);
                                     pathRemoved = true;
                                     modifiedConfigs.push(path.basename(configPath));
