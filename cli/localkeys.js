@@ -25,10 +25,10 @@ Usage:
 
 Commands:
   run --project=<name> <command>    Run command with environment variables
-  get <project> <key>              Get a secret value
-  set <project> <key> <value>      Set a secret value
-  list                             List all projects
-  help                             Show this help message
+  get <project> <key>               Get a secret value
+  set <project> <key> <value>       Set a secret value
+  list                              List all projects
+  help                              Show this help message
 
 Examples:
   localkeys run --project=myapp -- npm start
@@ -76,7 +76,7 @@ async function sendRequest(action, data = {}) {
     const serverInfo = getServerInfo();
 
     if (!serverInfo) {
-        throw new Error("LocalKeys 앱이 실행 중이 아닙니다");
+        throw new Error("Error: LocalKeys app is not running.");
     }
 
     return new Promise((resolve, reject) => {
@@ -112,21 +112,21 @@ async function sendRequest(action, data = {}) {
                     if (res.statusCode === 200) {
                         resolve(response);
                     } else {
-                        reject(new Error(response.error || `서버 오류: ${res.statusCode}`));
+                        reject(new Error(response.error || `Error: ERROR-${res.statusCode}`));
                     }
                 } catch (error) {
-                    reject(new Error(`응답 파싱 오류: ${error.message}`));
+                    reject(new Error(`Error: ERROR-${error.message}`));
                 }
             });
         });
 
         req.on("error", (error) => {
-            reject(new Error(`요청 실패: ${error.message}`));
+            reject(new Error(`Error: ERROR-${error.message}`));
         });
 
         req.setTimeout(30000, () => {
             req.destroy();
-            reject(new Error("요청 타임아웃"));
+            reject(new Error("Error: Request timed out"));
         });
 
         req.write(requestData);
