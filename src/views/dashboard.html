@@ -12,9 +12,14 @@
                 <h1 class="page-title">Projects</h1>
                 <div class="header-actions">
                     <button class="btn" id="add-project-btn">Add Project</button>
-                    <button class="btn btn-secondary" id="install-cli-btn">Install CLI</button>
                     <button class="btn btn-secondary" id="logs-btn">Logs</button>
                     <button class="btn btn-secondary" id="lock-btn">Lock</button>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('settings')">⋯</button>
+                        <div class="dropdown-menu hidden" id="dropdown-settings">
+                            <button class="dropdown-item" id="install-cli-btn">Install CLI</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -110,7 +115,12 @@
             <div class="project-stats">
               <div class="secret-count">${project.secretCount} secrets</div>
               <div class="project-actions">
-                <button class="btn btn-secondary" onclick="event.stopPropagation(); deleteProject('${project.name}')">Delete</button>
+                <div class="dropdown">
+                  <button class="btn btn-secondary dropdown-toggle" onclick="event.stopPropagation(); toggleDropdown('${project.name}')">⋯</button>
+                  <div class="dropdown-menu hidden" id="dropdown-${project.name}">
+                    <button class="dropdown-item" onclick="event.stopPropagation(); deleteProject('${project.name}')">Delete Project</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -288,10 +298,35 @@
                     }
                 });
 
+                // 드롭다운 토글 함수
+                function toggleDropdown(id) {
+                    const dropdown = document.getElementById(`dropdown-${id}`);
+                    const allDropdowns = document.querySelectorAll(".dropdown-menu");
+
+                    // 다른 드롭다운 모두 닫기
+                    allDropdowns.forEach((d) => {
+                        if (d !== dropdown) {
+                            d.classList.add("hidden");
+                        }
+                    });
+
+                    // 현재 드롭다운 토글
+                    dropdown.classList.toggle("hidden");
+                }
+
                 // 전역 함수로 등록 (HTML onclick에서 사용)
                 window.openProject = openProject;
                 window.deleteProject = deleteProject;
                 window.showAddProjectModal = showAddProjectModal;
+                window.toggleDropdown = toggleDropdown;
+
+                // 외부 클릭 시 드롭다운 닫기
+                document.addEventListener("click", function (e) {
+                    if (!e.target.closest(".dropdown")) {
+                        const allDropdowns = document.querySelectorAll(".dropdown-menu");
+                        allDropdowns.forEach((d) => d.classList.add("hidden"));
+                    }
+                });
 
                 // 자동 새로고침 설정 (10초마다)
                 const autoRefreshInterval = setInterval(async () => {
@@ -318,7 +353,7 @@
                 // CLI 작업 처리 (설치/제거)
                 async function handleCliAction(action) {
                     try {
-                        const isInstalling = action === 'install';
+                        const isInstalling = action === "install";
                         const loadingText = isInstalling ? "Installing..." : "Uninstalling...";
                         const apiMethod = isInstalling ? window.localkeys.cli.install : window.localkeys.cli.uninstall;
                         const successPrefix = isInstalling ? "installation" : "uninstallation";
@@ -332,22 +367,12 @@
                             await checkCliStatus();
                         } else {
                             notificationManager.error(result.error);
-                            setCliButtonState(
-                                isInstalling ? "Install CLI" : "Uninstall CLI",
-                                false,
-                                "1",
-                                isInstalling ? installCli : uninstallCli
-                            );
+                            setCliButtonState(isInstalling ? "Install CLI" : "Uninstall CLI", false, "1", isInstalling ? installCli : uninstallCli);
                         }
                     } catch (error) {
-                        const actionName = action === 'install' ? 'installation' : 'uninstallation';
+                        const actionName = action === "install" ? "installation" : "uninstallation";
                         notificationManager.error(`CLI ${actionName} failed: ${error.message}`);
-                        setCliButtonState(
-                            action === 'install' ? "Install CLI" : "Uninstall CLI",
-                            false,
-                            "1",
-                            action === 'install' ? installCli : uninstallCli
-                        );
+                        setCliButtonState(action === "install" ? "Install CLI" : "Uninstall CLI", false, "1", action === "install" ? installCli : uninstallCli);
                     }
                 }
 
@@ -356,22 +381,22 @@
                     try {
                         const result = await window.localkeys.cli.check();
                         if (result.installed) {
-                            setCliButtonState("Uninstall CLI", false, "1", () => handleCliAction('uninstall'));
+                            setCliButtonState("Uninstall CLI", false, "1", () => handleCliAction("uninstall"));
                         } else {
-                            setCliButtonState("Install CLI", false, "1", () => handleCliAction('install'));
+                            setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
                         }
                     } catch (error) {
-                        setCliButtonState("Install CLI", false, "1", () => handleCliAction('install'));
+                        setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
                     }
                 }
 
                 // CLI 설치 함수
-                const installCli = () => handleCliAction('install');
+                const installCli = () => handleCliAction("install");
 
                 // CLI 제거 함수
                 const uninstallCli = () => {
                     if (confirm("Are you sure you want to uninstall the LocalKeys CLI?")) {
-                        handleCliAction('uninstall');
+                        handleCliAction("uninstall");
                     }
                 };
 

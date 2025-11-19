@@ -156,7 +156,12 @@
               <div class="secret-actions">
                 <button class="toggle-visibility" onclick="toggleVisibility('${key}')">👁️</button>
                   <button class="btn btn-secondary" onclick="editSecret('${key}')">Edit</button>
-                <button class="btn btn-danger" onclick="deleteSecret('${key}')">Delete</button>
+                  <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" onclick="event.stopPropagation(); toggleDropdown('${key}')">⋯</button>
+                    <div class="dropdown-menu hidden" id="dropdown-${key}">
+                      <button class="dropdown-item dropdown-item-danger" onclick="event.stopPropagation(); deleteSecret('${key}')">Delete Secret</button>
+                    </div>
+                  </div>
               </div>
             </div>
             <div class="secret-value masked" id="value-${key}">${escapeHtml(filteredSecrets[key])}</div>
@@ -424,11 +429,36 @@
                     }
                 });
 
+                // 드롭다운 토글 함수
+                function toggleDropdown(key) {
+                    const dropdown = document.getElementById(`dropdown-${key}`);
+                    const allDropdowns = document.querySelectorAll('.dropdown-menu');
+
+                    // 다른 드롭다운 모두 닫기
+                    allDropdowns.forEach(d => {
+                        if (d !== dropdown) {
+                            d.classList.add('hidden');
+                        }
+                    });
+
+                    // 현재 드롭다운 토글
+                    dropdown.classList.toggle('hidden');
+                }
+
                 // 전역 함수로 등록 (HTML onclick에서 사용)
                 window.toggleVisibility = toggleVisibility;
                 window.editSecret = editSecret;
                 window.deleteSecret = deleteSecret;
                 window.showAddSecretModal = showAddSecretModal;
+                window.toggleDropdown = toggleDropdown;
+
+                // 외부 클릭 시 드롭다운 닫기
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.dropdown')) {
+                        const allDropdowns = document.querySelectorAll('.dropdown-menu');
+                        allDropdowns.forEach(d => d.classList.add('hidden'));
+                    }
+                });
 
                 // 자동 새로고침 설정 (5초마다)
                 const autoRefreshInterval = setInterval(async () => {

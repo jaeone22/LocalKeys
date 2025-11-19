@@ -21,7 +21,7 @@ textarea,
 select,
 [contenteditable="true"],
 .selectable {
-    user-select: text !important;
+    user-select: text;
 }
 
 /* 다크모드 색상 변수 */
@@ -1168,4 +1168,59 @@ select,
 .requirement.met::before {
     content: "✓";
     color: var(--success);
+}
+
+/* 드롭다운 메뉴 스타일 */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: rgba(33, 33, 33, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 150px;
+    overflow: hidden;
+}
+
+.dropdown-menu.hidden {
+    display: none;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.dropdown-item-danger {
+    color: var(--error);
+}
+
+.dropdown-item-danger:hover {
+    background-color: rgba(244, 67, 54, 0.1);
 }
