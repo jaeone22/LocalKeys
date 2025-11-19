@@ -259,7 +259,6 @@ select,
 
 .project-card,
 .secret-item {
-    margin-bottom: 10px;
     cursor: pointer;
 }
 
