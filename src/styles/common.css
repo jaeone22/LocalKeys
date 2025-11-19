@@ -28,15 +28,14 @@ select,
 :root {
     --bg-primary: #131313;
     --bg-secondary: #212121;
-    --bg-tertiary: #303030;
+    --bg-tertiary: #2a2a2a;
     --text-primary: #e0e0e0;
     --text-secondary: #a0a0a0;
     --accent: #4a9eff;
-    --accent-hover: #3a8eef;
     --success: #4caf50;
     --warning: #ff9800;
     --error: #f44336;
-    --border: #404040;
+    --border: #262626;
 }
 
 /* 컨테이너 */
@@ -796,10 +795,11 @@ select,
     padding: 20px;
     cursor: pointer;
     border-radius: 8px;
+    border: var(--border) 1px solid;
 }
 
 .project-card:hover {
-    border-color: var(--accent);
+    background-color: var(--bg-tertiary);
 }
 
 .project-name {
@@ -861,7 +861,7 @@ select,
     width: 100%;
     padding: 12px 40px 12px 16px;
     background-color: var(--bg-secondary);
-    border: none;
+    border: var(--border) 1px solid;
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 14px;
@@ -1077,6 +1077,7 @@ select,
     padding: 20px;
     margin-bottom: 10px;
     border-radius: 8px;
+    border: var(--border) 1px solid;
 }
 
 .secret-header {
