@@ -28,10 +28,7 @@
                         <button type="submit" class="btn unlock-btn" id="unlock-btn">Unlock Vault</button>
                     </form>
 
-                    <div class="forgot-password">
-                        <a href="#" id="forgot-link">Forgot password?</a>
-                    </div>
-                </div>
+                  </div>
             </div>
         </div>
 
@@ -41,8 +38,7 @@
                 const unlockBtn = document.getElementById("unlock-btn");
                 const unlockForm = document.getElementById("unlock-form");
                 const messageContainer = document.getElementById("message-container");
-                const forgotLink = document.getElementById("forgot-link");
-
+  
                 // 메시지 표시
                 function showMessage(message, type) {
                     messageContainer.innerHTML = `
@@ -99,63 +95,7 @@
                     }
                 });
 
-                // 비밀번호 찾기 클릭
-                forgotLink.addEventListener("click", function (e) {
-                    e.preventDefault();
-
-                    const modal = document.createElement("div");
-                    modal.className = "modal-overlay";
-                    modal.innerHTML = `
-          <div class="modal">
-            <div class="modal-header">
-              <h3 class="modal-title">Forgot Password?</h3>
-            </div>
-            <div class="modal-body">
-              <p>Your master password cannot be recovered if lost.</p>
-              <p>All your encrypted data is stored locally and can only be accessed with your master password.</p>
-              <p>If you forget your password, you'll need to:</p>
-              <ol style="margin-left: 20px; margin-top: 10px;">
-                <li>Delete the vault file at ~/.localkeys/</li>
-                <li>Set up a new vault with a new master password</li>
-                <li>Re-add all your projects and secrets</li>
-              </ol>
-              <p style="margin-top: 15px; color: var(--warning);">
-                <strong>Warning:</strong> This will permanently delete all your stored credentials.
-              </p>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" id="cancel-reset">Cancel</button>
-              <button class="btn btn-danger" id="confirm-reset">Reset Vault</button>
-            </div>
-          </div>
-        `;
-
-                    document.body.appendChild(modal);
-
-                    // 모달 닫기
-                    modal.addEventListener("click", function (e) {
-                        if (e.target === modal) {
-                            document.body.removeChild(modal);
-                        }
-                    });
-
-                    document.getElementById("cancel-reset").addEventListener("click", function () {
-                        document.body.removeChild(modal);
-                    });
-
-                    document.getElementById("confirm-reset").addEventListener("click", async function () {
-                        if (confirm("Are you sure you want to reset your vault? This action cannot be undone.")) {
-                            try {
-                                // Vault 리셋 로직은 main.js에서 처리
-                                await window.localkeys.navigate("setup");
-                                document.body.removeChild(modal);
-                            } catch (error) {
-                                showMessage(`Error resetting vault: ${error.message}`, "error");
-                            }
-                        }
-                    });
-                });
-
+  
                 passwordInput.focus();
             });
         </script>

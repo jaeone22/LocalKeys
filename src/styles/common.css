@@ -682,20 +682,6 @@ select,
     margin-top: 10px;
 }
 
-.forgot-password {
-    margin-top: 20px;
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.forgot-password a {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-.forgot-password a:hover {
-    text-decoration: underline;
-}
 
 /* Approval 페이지 스타일 */
 .approval-container {
