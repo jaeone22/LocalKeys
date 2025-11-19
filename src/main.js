@@ -22,8 +22,9 @@ let isQuitting = false;
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
 
 // 앱 버전 정보
-const APP_VERSION = "0.1";
+const APP_VERSION = "1.0.0";
 // 앱 버전 정보
+
 // 트레이 아이콘 생성
 function createTray() {
     // 트레이 아이콘이 이미 있으면 제거
@@ -161,18 +162,17 @@ async function checkVersion() {
     }
 }
 
-
 // 업데이트 알림창 표시
 function showUpdateDialog(newVersion) {
     const { BrowserWindow } = require("electron");
 
     const updateWindow = new BrowserWindow({
         width: 450,
-        height: 300,
+        height: 240,
         parent: mainWindow,
-        modal: true,
-        frame: false,
-        alwaysOnTop: true,
+        modal: false,
+        frame: true,
+        alwaysOnTop: false,
         resizable: false,
         webPreferences: {
             nodeIntegration: false,
@@ -196,13 +196,6 @@ function showUpdateDialog(newVersion) {
                 color: #e0e0e0;
                 margin: 0;
                 padding: 30px;
-                text-align: center;
-                height: 100vh;
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
             }
             .title {
                 font-size: 24px;
@@ -218,50 +211,62 @@ function showUpdateDialog(newVersion) {
             .actions {
                 display: flex;
                 gap: 15px;
-                justify-content: center;
+                justify-content: end;
             }
             .btn {
-                padding: 12px 24px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 6px 14px;
+                font-family: -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
                 border-radius: 6px;
-                text-decoration: none;
-                font-weight: 500;
-                cursor: pointer;
                 border: none;
+                color: #fff;
+                background-origin: border-box;
+                user-select: none;
+                touch-action: manipulation;
+                cursor: pointer;
                 font-size: 14px;
             }
-            .btn-primary {
+            .btn {
                 background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
-                color: white;
+                box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
             }
-            .btn-primary:hover {
+            .btn:focus {
+                box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), 0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
+                outline: 0;
+            }
+            .btn:active {
                 background: linear-gradient(180deg, rgb(107, 163, 249) 0%, #4b91f7 100%);
             }
-            .btn-secondary {
-                background: #303030;
-                color: #a0a0a0;
+            .btn-secondary{
+                background: linear-gradient(180deg, rgb(100, 100, 100) 0%, rgb(90, 90, 90) 100%);
+                box-shadow: 0px 0.5px 1.5px rgba(90, 90, 90, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
             }
-            .btn-secondary:hover {
-                background: #212121;
-                color: #e0e0e0;
+            .btn-secondary:focus {
+                box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(90, 90, 90, 0.25), 0px 0px 0px 3.5px rgba(90, 90, 90, 0.5);
+                outline: 0;
+            }
+            .btn-secondary:active {
+                background: linear-gradient(180deg, rgb(120, 120, 120) 0%, rgb(100, 100, 100) 100%);
             }
         </style>
     </head>
     <body>
-        <div class="title">Update Available (${newVersion})</div>
+        <div class="title">New update available</div>
         <div class="description">
+            v${APP_VERSION} ➠ v${newVersion}<br/>
             Click the update button to see more details.
         </div>
         <div class="actions">
-            <button class="btn btn-primary" onclick="openUpdatePage()">Update</button>
             <button class="btn btn-secondary" onclick="closeDialog()">Skip</button>
+            <button class="btn btn-primary" onclick="openUpdatePage()">Update</button>
         </div>
         <script>
             function openUpdatePage() {
-                // 새 창으로 업데이트 페이지 열기
                 window.open('https://localkeys.privatestater.com/update', '_blank');
                 closeDialog();
             }
-
             function closeDialog() {
                 window.close();
             }

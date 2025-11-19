@@ -5,7 +5,7 @@
     box-sizing: border-box;
 }
 
-/* 네이티브 앱처럼 텍스트 선택 비활성화 (입력 필드 제외) */
+/* 텍스트 선택 비활성화 */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: #1a1a1a;
