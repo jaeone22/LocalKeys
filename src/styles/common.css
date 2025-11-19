@@ -71,10 +71,7 @@ select,
 .copy-btn,
 .pagination button {
     display: flex;
-    flex-direction: column;
-    align-items: center;
     padding: 6px 14px;
-    font-family: -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
     border-radius: 6px;
     border: none;
     color: #fff;
@@ -85,7 +82,8 @@ select,
     font-size: 14px;
 }
 
-/* 기본 버튼 (파란색) */
+/* 버튼 타입별 스타일 */
+.btn-primary,
 .btn,
 .unlock-btn,
 .approve-btn {
@@ -93,6 +91,7 @@ select,
     box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
 }
 
+.btn-primary:focus,
 .btn:focus,
 .unlock-btn:focus,
 .approve-btn:focus {
@@ -100,13 +99,13 @@ select,
     outline: 0;
 }
 
+.btn-primary:active,
 .btn:active,
 .unlock-btn:active,
 .approve-btn:active {
     background: linear-gradient(180deg, rgb(107, 163, 249) 0%, #4b91f7 100%);
 }
 
-/* 보조 버튼 (회색) */
 .btn-secondary,
 .back-btn,
 .pagination button {
@@ -127,7 +126,6 @@ select,
     background: linear-gradient(180deg, rgb(120, 120, 120) 0%, rgb(100, 100, 100) 100%);
 }
 
-/* 위험 버튼 (빨간색) */
 .btn-danger,
 .deny-btn {
     background: linear-gradient(180deg, rgb(247, 75, 75) 0%, rgb(246, 54, 54) 100%);
@@ -145,7 +143,6 @@ select,
     background: linear-gradient(180deg, rgb(249, 107, 107) 0%, rgb(247, 75, 75) 100%);
 }
 
-/* 성공 버튼 (초록색) */
 .btn-success {
     background: linear-gradient(180deg, rgb(75, 247, 75) 0%, rgb(54, 246, 54) 100%);
     box-shadow: 0px 0.5px 1.5px rgba(54, 246, 54, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
@@ -160,8 +157,9 @@ select,
     background: linear-gradient(180deg, rgb(163, 249, 107) 0%, rgb(75, 247, 75) 100%);
 }
 
-/* 비활성화된 버튼 */
+/* 버튼 상태별 스타일 */
 .btn:disabled,
+.btn-primary:disabled,
 .btn-secondary:disabled,
 .btn-danger:disabled,
 .btn-success:disabled,
@@ -188,7 +186,7 @@ select,
     color: var(--text-primary);
 }
 
-/* 페이지네이션 버튼 */
+/* 페이지네이션 버튼 특수 스타일 */
 .pagination .current-page {
     background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
     box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
@@ -230,12 +228,30 @@ select,
     color: var(--text-secondary);
 }
 
-/* 카드 */
-.card {
+/* 카드 스타일 */
+.card,
+.approval-card,
+.unlock-form,
+.project-card,
+.secret-item {
     background-color: var(--bg-secondary);
     padding: 20px;
-    margin-bottom: 20px;
     border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.card {
+    margin-bottom: 20px;
+}
+
+.project-card,
+.secret-item {
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.project-card:hover {
+    background-color: var(--bg-tertiary);
 }
 
 .card-header {
@@ -609,6 +625,25 @@ select,
     gap: 20px;
 }
 
+.container-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container-horizontal {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.container-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 /* Lock 페이지 스타일 */
 .lock-container {
     max-width: 400px;
@@ -639,11 +674,6 @@ select,
     margin-bottom: 30px;
 }
 
-.unlock-form {
-    background-color: var(--bg-secondary);
-    padding: 20px;
-    border-radius: 8px;
-}
 
 .unlock-btn {
     width: 100%;
@@ -669,19 +699,12 @@ select,
 
 /* Approval 페이지 스타일 */
 .approval-container {
-    display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
 }
 
 .approval-card {
-    background-color: var(--bg-secondary);
-    padding: 20px;
     max-width: 450px;
     width: 100%;
-    border-radius: 8px;
 }
 
 .titlebar {
@@ -754,14 +777,14 @@ select,
     width: 100%;
 }
 
-/* 공통 페이지 헤더 스타일 */
+/* 페이지 헤더 스타일 */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border);
 }
 
 .page-title {
@@ -775,13 +798,20 @@ select,
     gap: 10px;
 }
 
-/* Dashboard 페이지 스타일 */
-
-.dashboard-title {
+/* 페이지별 제목 스타일 통합 */
+.dashboard-title,
+.logs-title,
+.project-title,
+.page-title {
     font-size: 28px;
     font-weight: 600;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
+
+/* Dashboard 페이지 스타일 */
 
 .projects-grid {
     display: grid;
@@ -790,17 +820,6 @@ select,
     margin-bottom: 20px;
 }
 
-.project-card {
-    background-color: var(--bg-secondary);
-    padding: 20px;
-    cursor: pointer;
-    border-radius: 8px;
-    border: var(--border) 1px solid;
-}
-
-.project-card:hover {
-    background-color: var(--bg-tertiary);
-}
 
 .project-name {
     font-size: 18px;
@@ -881,15 +900,6 @@ select,
 }
 
 /* Logs 페이지 스타일 */
-
-.logs-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
 
 .filters {
     display: flex;
@@ -1043,15 +1053,6 @@ select,
 
 /* Project 페이지 스타일 */
 
-.project-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .back-btn {
     background: none;
     border: none;
@@ -1072,13 +1073,6 @@ select,
     margin-bottom: 15px;
 }
 
-.secret-item {
-    background-color: var(--bg-secondary);
-    padding: 20px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border: var(--border) 1px solid;
-}
 
 .secret-header {
     display: flex;
