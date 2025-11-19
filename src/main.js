@@ -14,7 +14,6 @@ let vault = null;
 let logger = null;
 let httpServer = null;
 let isUnlocked = false;
-let autoLockTimer = null;
 let tray = null;
 let isQuitting = false;
 
@@ -382,18 +381,6 @@ ELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliJsPath}" "$@"`;
     }
 }
 
-// 자동 잠금 타이머 설정
-function setAutoLockTimer() {
-    if (autoLockTimer) {
-        clearTimeout(autoLockTimer);
-    }
-
-    autoLockTimer = setTimeout(() => {
-        if (isUnlocked) {
-            lockVault();
-        }
-    }, 5 * 60 * 1000); // 5분
-}
 
 // Vault 잠금
 function lockVault() {
@@ -419,7 +406,7 @@ function lockVault() {
             mainWindow.loadFile("src/views/lock.html");
         }
 
-        logger.logLock("Vault auto-locked");
+        logger.logLock("Vault locked");
     }
 }
 
@@ -484,7 +471,6 @@ function setupIpcHandlers() {
 
             // Vault 상태 동기화
             isUnlocked = !vault.isLocked;
-            setAutoLockTimer();
 
             // Logger 암호화 키 설정
             if (logger && vault.key) {
@@ -509,7 +495,6 @@ function setupIpcHandlers() {
 
             // Vault 상태 동기화
             isUnlocked = !vault.isLocked;
-            setAutoLockTimer();
 
             // Logger 암호화 키 설정
             if (logger && vault.key) {
