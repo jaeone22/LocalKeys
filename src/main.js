@@ -114,7 +114,7 @@ async function checkVersion() {
         const https = require("https");
         const { URL } = require("url");
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const url = new URL("https://localkeys.privatestater.com/api/version");
 
             const options = {
@@ -259,7 +259,7 @@ function showUpdateDialog(newVersion) {
             Click the update button to see more details.
         </div>
         <div class="actions">
-            <button class="btn btn-secondary" onclick="closeDialog()">Skip</button>
+            <button class="btn btn-secondary" onclick="closeDialog()">Close</button>
             <button class="btn btn-primary" onclick="openUpdatePage()">Update</button>
         </div>
         <script>
