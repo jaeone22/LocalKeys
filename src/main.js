@@ -275,6 +275,11 @@ function showUpdateDialog(newVersion) {
 
     updateWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(updateHTML)}`);
 
+    // 윈도우에서 메뉴 바 숨기기
+    if (process.platform === "win32") {
+        updateWindow.setMenu(null);
+    }
+
     // 새 창에서 링크 열기 처리
     updateWindow.webContents.setWindowOpenHandler(({ url }) => {
         require("electron").shell.openExternal(url);
@@ -420,6 +425,7 @@ function createWindow() {
             preload: path.join(__dirname, "preload.js"),
         },
         titleBarStyle: "default", // 운영체제 기본 윈도우 메뉴바 사용
+        menuBarVisible: false, // 윈도우에서 메뉴 바 숨기기
         show: false,
         icon: path.join(__dirname, "assets", "icon.png"),
     });
@@ -438,6 +444,10 @@ function createWindow() {
     }
 
     mainWindow.once("ready-to-show", () => {
+        // 윈도우에서 메뉴 바 숨기기
+        if (process.platform === "win32") {
+            mainWindow.setMenu(null);
+        }
         mainWindow.show();
     });
 
@@ -1045,6 +1055,11 @@ function showApprovalDialog(projectName, keys) {
             });
 
             approvalWindow.loadFile("src/views/approval.html");
+
+            // 윈도우에서 메뉴 바 숨기기
+            if (process.platform === "win32") {
+                approvalWindow.setMenu(null);
+            }
 
             // 간단한 IPC 핸들러 사용
             const channelName = "approval-response-simple";
