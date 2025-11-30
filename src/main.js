@@ -8,6 +8,7 @@ const Vault = require("./modules/vault");
 const Logger = require("./modules/logger");
 const HttpServer = require("./modules/http-server");
 const I18n = require("./modules/i18n");
+const License = require("./modules/license");
 
 // 전역 변수
 let mainWindow = null;
@@ -18,6 +19,7 @@ let isUnlocked = false;
 let tray = null;
 let isQuitting = false;
 let i18n = null;
+let license = null;
 
 // LocalKeys 데이터 디렉토리 경로
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
@@ -320,6 +322,9 @@ function initializeApp() {
     // Vault 초기화
     vault = new Vault(LOCALKEYS_DIR);
 
+    // License 초기화
+    license = new License(LOCALKEYS_DIR);
+
     // HTTP 서버 초기화
     httpServer = new HttpServer(vault, logger);
 
@@ -445,9 +450,14 @@ function createWindow() {
         icon: path.join(__dirname, "assets", "icon.png"),
     });
 
-    // 화면 결정 - Vault 상태에 따라 동적으로 결정
-    if (!vault.exists()) {
-        // 처음 설치 시 설정 화면
+    // 화면 결정 - 라이선스 -> Vault 상태 순서로 확인
+    const licenseCheck = license.checkLocalLicense();
+    
+    if (!licenseCheck.valid) {
+        // 라이선스가 없거나 유효하지 않으면 라이선스 화면 표시
+        mainWindow.loadFile("src/views/license.html");
+    } else if (!vault.exists()) {
+        // 라이선스는 있지만 Vault가 없으면 설정 화면
         mainWindow.loadFile("src/views/setup.html");
     } else if (isUnlocked && !vault.isLocked) {
         // Vault가 이미 잠금 해제된 상태면 대시보드 표시
@@ -660,7 +670,14 @@ function setupIpcHandlers() {
         } else if (page === "setup") {
             mainWindow.loadFile("src/views/setup.html");
         } else if (page === "lock") {
-            lockVault();
+            // 이미 unlock 상태면 lockVault 실행, 아니면 lock.html 로드
+            if (isUnlocked) {
+                lockVault();
+            } else {
+                mainWindow.loadFile("src/views/lock.html");
+            }
+        } else if (page === "license") {
+            mainWindow.loadFile("src/views/license.html");
         }
         return { success: true };
     });
@@ -1032,6 +1049,57 @@ function setupIpcHandlers() {
             return i18n.getAllTranslations();
         }
         return { locale: "en", translations: {} };
+    });
+
+    // 라이선스 관리
+    ipcMain.handle("license:check", () => {
+        if (!license) return { valid: false, reason: "license_not_initialized" };
+        return license.checkLocalLicense();
+    });
+
+    ipcMain.handle("license:activate", async (event, userKey, password) => {
+        if (!license) return { success: false, error: "license_not_initialized" };
+        
+        try {
+            const result = await license.checkLicenseWithServer(userKey, password);
+            
+            if (result.success) {
+                // 라이선스 파일 저장
+                const saveResult = license.saveLicense(result.licence, result.signature);
+                
+                if (saveResult.success) {
+                    return { success: true };
+                } else {
+                    return { success: false, error: "save_failed" };
+                }
+            } else {
+                return { success: false, error: result.error };
+            }
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle("license:delete", () => {
+        if (!license) return { success: false, error: "license_not_initialized" };
+        return license.deleteLicense();
+    });
+
+    ipcMain.handle("license:reload", () => {
+        // 라이선스 활성화 후 적절한 화면으로 이동
+        const licenseCheck = license.checkLocalLicense();
+        
+        if (!licenseCheck.valid) {
+            mainWindow.loadFile("src/views/license.html");
+        } else if (!vault.exists()) {
+            mainWindow.loadFile("src/views/setup.html");
+        } else if (isUnlocked && !vault.isLocked) {
+            mainWindow.loadFile("src/views/dashboard.html");
+        } else {
+            mainWindow.loadFile("src/views/lock.html");
+        }
+        
+        return { success: true };
     });
 }
 

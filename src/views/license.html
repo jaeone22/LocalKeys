@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LocalKeys - License Activation</title>
+        <link rel="stylesheet" href="../styles/common.css" />
+    </head>
+    <body>
+        <div class="container">
+            <div class="lock-container">
+                <div class="logo">
+                    <h1>LocalKeys</h1>
+                    <p id="subtitle">Enter your credentials to activate license</p>
+                </div>
+
+                <div id="message-container"></div>
+
+                <form id="license-form">
+                    <div class="input-group">
+                        <input type="text" id="userKey" placeholder="User ID" autocomplete="username" autofocus />
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+                    </div>
+                    <div class="input-group">
+                        <button type="submit" class="btn" id="activate-btn">Activate License</button>
+                    </div>
+                </form>
+
+                <div class="status-message" id="status-message" style="margin-top: 20px; text-align: center; color: #a0a0a0; font-size: 14px"></div>
+            </div>
+        </div>
+
+        <script src="../modules/i18n-helper.js"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", async function () {
+                const userKeyInput = document.getElementById("userKey");
+                const passwordInput = document.getElementById("password");
+                const activateBtn = document.getElementById("activate-btn");
+                const licenseForm = document.getElementById("license-form");
+                const statusMessage = document.getElementById("status-message");
+
+                // 폼 제출
+                licenseForm.addEventListener("submit", async function (e) {
+                    e.preventDefault();
+
+                    const userKey = userKeyInput.value.trim();
+                    const password = passwordInput.value;
+
+                    if (!userKey || !password) {
+                        statusMessage.textContent = "Please enter both User ID and Password";
+                        statusMessage.style.color = "#ff6b6b";
+                        return;
+                    }
+
+                    // 버튼 비활성화 및 로딩 표시
+                    activateBtn.disabled = true;
+                    activateBtn.textContent = "Activating...";
+                    statusMessage.textContent = "Checking license...";
+                    statusMessage.style.color = "#a0a0a0";
+
+                    try {
+                        const result = await window.localkeys.license.activate(userKey, password);
+
+                        if (result.success) {
+                            // 라이선스 활성화 성공
+                            statusMessage.textContent = "License activated successfully!";
+                            statusMessage.style.color = "#51cf66";
+
+                            // 잠시 후 적절한 화면으로 이동
+                            setTimeout(async () => {
+                                await window.localkeys.license.reload();
+                            }, 500);
+                        } else {
+                            // 라이선스 활성화 실패
+                            let errorMessage = "License activation failed";
+                            if (result.error === "no_license") {
+                                errorMessage = "No license found for this account";
+                            } else if (result.error === "invalid_credentials") {
+                                errorMessage = "Invalid credentials";
+                            } else if (result.error === "invalid_signature") {
+                                errorMessage = "Invalid license signature";
+                            } else if (result.error === "network_error") {
+                                errorMessage = "Network error. Please check your connection.";
+                            } else if (result.error === "timeout") {
+                                errorMessage = "Connection timeout. Please try again.";
+                            }
+
+                            statusMessage.textContent = errorMessage;
+                            statusMessage.style.color = "#ff6b6b";
+
+                            // 버튼 복원
+                            activateBtn.disabled = false;
+                            activateBtn.textContent = "Activate License";
+                            passwordInput.value = "";
+                            passwordInput.focus();
+                        }
+                    } catch (error) {
+                        // 에러 발생
+                        statusMessage.textContent = "An error occurred. Please try again.";
+                        statusMessage.style.color = "#ff6b6b";
+
+                        activateBtn.disabled = false;
+                        activateBtn.textContent = "Activate License";
+                    }
+                });
+
+                userKeyInput.focus();
+            });
+        </script>
+    </body>
+</html>

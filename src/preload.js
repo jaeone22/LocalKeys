@@ -58,6 +58,14 @@ const api = {
     i18n: {
         getTranslations: () => ipcRenderer.invoke("i18n:getTranslations"),
     },
+
+    // 라이선스 관리
+    license: {
+        check: () => ipcRenderer.invoke("license:check"),
+        activate: (userKey, password) => ipcRenderer.invoke("license:activate", userKey, password),
+        delete: () => ipcRenderer.invoke("license:delete"),
+        reload: () => ipcRenderer.invoke("license:reload"),
+    },
 };
 
 // 렌더러 프로세스에 API 노출
