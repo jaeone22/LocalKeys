@@ -65,6 +65,7 @@ const api = {
         activate: (userKey, password) => ipcRenderer.invoke("license:activate", userKey, password),
         delete: () => ipcRenderer.invoke("license:delete"),
         reload: () => ipcRenderer.invoke("license:reload"),
+        openBuyPage: () => ipcRenderer.invoke("license:openBuyPage"),
     },
 };
 

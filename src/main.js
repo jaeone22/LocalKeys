@@ -1098,6 +1098,11 @@ function setupIpcHandlers() {
         } else {
             mainWindow.loadFile("src/views/lock.html");
         }
+    });
+
+    ipcMain.handle("license:openBuyPage", () => {
+        // 외부 브라우저에서 구매 페이지 열기
+        shell.openExternal("https://id.privatestater.com/buy?product=localkeys");
         
         return { success: true };
     });

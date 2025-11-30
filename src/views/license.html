@@ -26,6 +26,9 @@
                     <div class="input-group">
                         <button type="submit" class="btn" id="activate-btn">Activate License</button>
                     </div>
+                    <div class="input-group">
+                        <button type="button" class="btn btn-secondary" id="buy-btn">Purchase License</button>
+                    </div>
                 </form>
 
                 <div class="status-message" id="status-message" style="margin-top: 20px; text-align: center; color: #a0a0a0; font-size: 14px"></div>
@@ -44,12 +47,19 @@
                 document.getElementById("userKey").placeholder = i18n.t("license.userIdPlaceholder");
                 document.getElementById("password").placeholder = i18n.t("license.passwordPlaceholder");
                 document.getElementById("activate-btn").textContent = i18n.t("license.activateBtn");
+                document.getElementById("buy-btn").textContent = i18n.t("license.buyBtn");
 
                 const userKeyInput = document.getElementById("userKey");
                 const passwordInput = document.getElementById("password");
                 const activateBtn = document.getElementById("activate-btn");
+                const buyBtn = document.getElementById("buy-btn");
                 const licenseForm = document.getElementById("license-form");
                 const statusMessage = document.getElementById("status-message");
+
+                // 구매 버튼 클릭 이벤트
+                buyBtn.addEventListener("click", function () {
+                    window.localkeys.license.openBuyPage();
+                });
 
                 // 폼 제출
                 licenseForm.addEventListener("submit", async function (e) {

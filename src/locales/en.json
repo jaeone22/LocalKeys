@@ -152,6 +152,7 @@
         "userIdPlaceholder": "User ID",
         "passwordPlaceholder": "Password",
         "activateBtn": "Activate License",
+        "buyBtn": "Purchase License",
         "activating": "Activating...",
         "errors": {
             "emptyFields": "Please enter both User ID and Password",
