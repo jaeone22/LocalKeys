@@ -68,7 +68,8 @@
     },
     "project": {
         "addSecret": "시크릿 추가",
-        "exportEnv": ".env 내보내기",
+        "importEnv": "불러오기",
+        "exportEnv": "내보내기",
         "searchPlaceholder": "시크릿 검색...",
         "edit": "편집",
         "addSecretModal": {
@@ -97,11 +98,13 @@
             "secretAdded": "시크릿 \"{{key}}\"이(가) 추가되었습니다",
             "secretSaved": "시크릿 \"{{key}}\"이(가) 저장되었습니다",
             "secretDeleted": "시크릿 \"{{key}}\"이(가) 삭제되었습니다",
+            "imported": "{{count}}개의 시크릿을 불러왔습니다",
             "exported": "시크릿이 {{path}}(으)로 내보내졌습니다",
             "failedToLoad": "시크릿을 불러오지 못했습니다",
             "failedToAdd": "시크릿 추가에 실패했습니다",
             "failedToSave": "시크릿 저장에 실패했습니다",
             "failedToDelete": "시크릿 삭제에 실패했습니다",
+            "failedToImport": ".env 파일 불러오기에 실패했습니다",
             "failedToExport": "시크릿 내보내기에 실패했습니다",
             "enterKey": "시크릿 키를 입력하세요",
             "keyExists": "이미 같은 키의 시크릿이 존재합니다",

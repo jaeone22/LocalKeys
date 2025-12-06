@@ -25,6 +25,7 @@ const api = {
         set: (projectName, key, value) => ipcRenderer.invoke("secret:set", projectName, key, value),
         delete: (projectName, key) => ipcRenderer.invoke("secret:delete", projectName, key),
         export: (projectName) => ipcRenderer.invoke("secrets:export", projectName),
+        import: (projectName) => ipcRenderer.invoke("secrets:import", projectName),
     },
 
     // 로그 관리

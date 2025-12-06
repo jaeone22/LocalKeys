@@ -68,7 +68,8 @@
     },
     "project": {
         "addSecret": "Add Secret",
-        "exportEnv": "Export .env",
+        "importEnv": "Import",
+        "exportEnv": "Export",
         "searchPlaceholder": "Search secrets...",
         "edit": "Edit",
         "addSecretModal": {
@@ -97,11 +98,13 @@
             "secretAdded": "Secret \"{{key}}\" added successfully",
             "secretSaved": "Secret \"{{key}}\" saved successfully",
             "secretDeleted": "Secret \"{{key}}\" deleted successfully",
+            "imported": "Imported {{count}} secrets",
             "exported": "Secrets exported to {{path}}",
             "failedToLoad": "Failed to load secrets",
             "failedToAdd": "Failed to add secret",
             "failedToSave": "Failed to save secret",
             "failedToDelete": "Failed to delete secret",
+            "failedToImport": "Failed to import .env file",
             "failedToExport": "Failed to export secrets",
             "enterKey": "Please enter a secret key",
             "keyExists": "A secret with this key already exists",

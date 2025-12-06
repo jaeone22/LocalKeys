@@ -445,7 +445,7 @@ function createWindow() {
 
     // 화면 결정 - 라이선스 -> Vault 상태 순서로 확인
     const licenseCheck = license.checkLocalLicense();
-    
+
     if (!licenseCheck.valid) {
         // 라이선스가 없거나 유효하지 않으면 라이선스 화면 표시
         mainWindow.loadFile("src/views/license.html");
@@ -633,7 +633,7 @@ function setupIpcHandlers() {
         }
     });
 
-    // .env 파일로 내보내기
+    // .env 파일 내보내기
     ipcMain.handle("secrets:export", async (event, projectName) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
 
@@ -654,6 +654,60 @@ function setupIpcHandlers() {
         }
 
         return { success: false, error: "Export cancelled" };
+    });
+
+    // .env 파일 불러오기
+    ipcMain.handle("secrets:import", async (event, projectName) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+
+        const result = await dialog.showOpenDialog(mainWindow, {
+            properties: ["openFile", "showHiddenFiles"],
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            try {
+                const filePath = result.filePaths[0];
+                const content = fs.readFileSync(filePath, "utf8");
+                const lines = content.split("\n");
+                const secrets = {};
+                let count = 0;
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine || trimmedLine.startsWith("#")) continue;
+
+                    const parts = trimmedLine.split("=");
+                    if (parts.length >= 2) {
+                        const key = parts[0].trim();
+                        // 값에서 =를 기주느로 분리
+                        const value = parts.slice(1).join("=").trim();
+
+                        // 따옴표 제거
+                        let cleanValue = value;
+                        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                            cleanValue = value.substring(1, value.length - 1);
+                        }
+
+                        if (key) {
+                            secrets[key] = cleanValue;
+                            count++;
+                        }
+                    }
+                }
+
+                if (count > 0) {
+                    vault.setSecrets(projectName, secrets);
+                    logger.logApp(`Secrets imported: ${projectName} <- ${filePath} (${count} secrets)`);
+                    return { success: true, count };
+                } else {
+                    return { success: false, error: "No valid secrets found in file" };
+                }
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        return { success: false, error: "Import cancelled" };
     });
 
     // 화면 전환
@@ -1052,14 +1106,14 @@ function setupIpcHandlers() {
 
     ipcMain.handle("license:activate", async (event, userKey, password) => {
         if (!license) return { success: false, error: "license_not_initialized" };
-        
+
         try {
             const result = await license.checkLicenseWithServer(userKey, password);
-            
+
             if (result.success) {
                 // 라이선스 파일 저장
                 const saveResult = license.saveLicense(result.licence, result.signature);
-                
+
                 if (saveResult.success) {
                     return { success: true };
                 } else {
@@ -1081,7 +1135,7 @@ function setupIpcHandlers() {
     ipcMain.handle("license:reload", () => {
         // 라이선스 활성화 후 적절한 화면으로 이동
         const licenseCheck = license.checkLocalLicense();
-        
+
         if (!licenseCheck.valid) {
             mainWindow.loadFile("src/views/license.html");
         } else if (!vault.exists()) {
@@ -1096,7 +1150,7 @@ function setupIpcHandlers() {
     ipcMain.handle("license:openBuyPage", () => {
         // 외부 브라우저에서 구매 페이지 열기
         shell.openExternal("https://id.privatestater.com/buy?product=localkeys");
-        
+
         return { success: true };
     });
 }

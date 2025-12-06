@@ -179,6 +179,30 @@ class Vault {
         this._scheduleAutoSave();
     }
 
+    setSecrets(projectName, secrets) {
+        this._ensureUnlocked();
+
+        if (!this.data.projects[projectName]) {
+            throw new Error(`Project '${projectName}' does not exist`);
+        }
+
+        const project = this.data.projects[projectName];
+        let updated = false;
+
+        for (const [key, value] of Object.entries(secrets)) {
+            if (project.secrets[key] !== value) {
+                project.secrets[key] = value;
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            project.updatedAt = new Date().toISOString();
+            this.data.updatedAt = new Date().toISOString();
+            this._scheduleAutoSave();
+        }
+    }
+
     deleteSecret(projectName, key) {
         this._ensureUnlocked();
 
