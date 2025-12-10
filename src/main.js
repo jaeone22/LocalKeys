@@ -20,7 +20,7 @@ let i18n = null;
 let license = null;
 
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.1.1";
 
 function createTray() {
     // 트레이 아이콘이 이미 있으면 제거
