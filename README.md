@@ -14,13 +14,14 @@ localkeys get myapp API_KEY
 localkeys run --project=myapp -- npm start
 ```
 
-# 빌드
+# Build
 
 ```bash
-# Build
-npm run build
-
 npm run build -- --mac
+```
+```bash
 npm run build -- --win
+```
+```bash
 npm run build -- --linux
 ```
