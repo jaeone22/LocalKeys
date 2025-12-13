@@ -25,7 +25,20 @@ let appInitialized = false;
 let ipcHandlersInitialized = false;
 
 const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
-const APP_VERSION = "1.1.1";
+
+function getAppVersion() {
+    // Electron 메타데이터 가져오기
+    try {
+        const v = app.getVersion?.();
+        if (typeof v === "string" && v.trim()) return v.trim();
+    } catch {
+        // 무시
+    }
+
+    return "0.0.0";
+}
+
+const APP_VERSION = getAppVersion();
 
 function createTray() {
     // 트레이 아이콘이 이미 있으면 제거
