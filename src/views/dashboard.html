@@ -246,18 +246,6 @@
 
                     emptyState.appendChild(description);
 
-                    if (projects.length === 0) {
-                        const createBtn = document.createElement("button");
-
-                        createBtn.className = "btn";
-
-                        createBtn.textContent = i18n.t("dashboard.emptyState.createProject");
-
-                        createBtn.onclick = showAddProjectModal;
-
-                        emptyState.appendChild(createBtn);
-                    }
-
                     return emptyState;
                 }
 

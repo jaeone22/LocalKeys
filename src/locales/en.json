@@ -37,8 +37,7 @@
         "emptyState": {
             "title": "No projects found",
             "descriptionEmpty": "Create your first project to start managing your secrets securely.",
-            "descriptionSearch": "No projects match your search criteria.",
-            "createProject": "Create Project"
+            "descriptionSearch": "No projects match your search criteria."
         },
         "deleteProject": {
             "confirm": "Are you sure you want to delete project \"{{name}}\"? This will also delete all secrets in this project.",
