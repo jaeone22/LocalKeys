@@ -14,19 +14,23 @@ class NotificationManager {
         const messageEl = document.createElement("div");
         messageEl.className = `message message-${type}`;
 
-        let icon = "✓";
-        if (type === "error") icon = "✕";
-        else if (type === "warning") icon = "⚠";
+        let iconClass = "lk-icon-check";
+        if (type === "error") iconClass = "lk-icon-x";
+        else if (type === "warning") iconClass = "lk-icon-circle-alert";
 
         messageEl.innerHTML = `
             <div class="message-content">
                 <div class="message-header">
                     <div class="message-left">
-                        <div class="message-icon">${icon}</div>
+                        <div class="message-icon">
+                            <span class="lk-icon ${iconClass}" aria-hidden="true"></span>
+                        </div>
                         <div class="message-text">${this.escapeHtml(message)}</div>
                     </div>
                 </div>
-                <button class="message-close">×</button>
+                <button class="message-close" aria-label="Close">
+                    <span class="lk-icon lk-icon-x" aria-hidden="true"></span>
+                </button>
             </div>
         `;
 
@@ -124,19 +128,23 @@ class NotificationManager {
         const messageEl = document.createElement("div");
         messageEl.className = `message message-${type}`;
 
-        let icon = "✓";
-        if (type === "error") icon = "✕";
-        else if (type === "warning") icon = "⚠";
+        let iconClass = "lk-icon-check";
+        if (type === "error") iconClass = "lk-icon-x";
+        else if (type === "warning") iconClass = "lk-icon-circle-alert";
 
         messageEl.innerHTML = `
             <div class="message-content">
                 <div class="message-header">
                     <div class="message-left">
-                        <div class="message-icon">${icon}</div>
+                        <div class="message-icon">
+                            <span class="lk-icon ${iconClass}" aria-hidden="true"></span>
+                        </div>
                         <div class="message-text">${this.escapeHtml(message)}</div>
                     </div>
                 </div>
-                <button class="message-close">×</button>
+                <button class="message-close" aria-label="Close">
+                    <span class="lk-icon lk-icon-x" aria-hidden="true"></span>
+                </button>
             </div>
         `;
 

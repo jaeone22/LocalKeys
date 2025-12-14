@@ -19,7 +19,9 @@
                 <form id="unlock-form">
                     <div class="input-group input-inline">
                         <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" autofocus />
-                        <button type="submit" class="btn unlock-btn" id="unlock-btn">▶︎</button>
+                        <button type="submit" class="btn unlock-btn" id="unlock-btn">
+                            <span class="lk-icon lk-icon-arrow-right" aria-hidden="true"></span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -37,8 +39,19 @@
                 document.getElementById("password").placeholder = i18n.t("lock.passwordPlaceholder");
                 const passwordInput = document.getElementById("password");
                 const unlockBtn = document.getElementById("unlock-btn");
+                const unlockIcon = unlockBtn.querySelector(".lk-icon");
                 const unlockForm = document.getElementById("unlock-form");
                 const messageContainer = document.getElementById("message-container");
+
+                function setUnlockButtonState(state) {
+                    if (!unlockIcon) return;
+                    unlockIcon.classList.remove("lk-icon-arrow-right", "lk-icon-loader", "lk-icon-spin");
+                    if (state === "loading") {
+                        unlockIcon.classList.add("lk-icon-loader", "lk-icon-spin");
+                    } else {
+                        unlockIcon.classList.add("lk-icon-arrow-right");
+                    }
+                }
 
                 // 폼 제출
                 unlockForm.addEventListener("submit", async function (e) {
@@ -52,7 +65,7 @@
 
                     // 버튼 비활성화 및 로딩 표시
                     unlockBtn.disabled = true;
-                    unlockBtn.textContent = "⏳";
+                    setUnlockButtonState("loading");
 
                     try {
                         const result = await window.localkeys.vault.unlock(password);
@@ -67,18 +80,19 @@
                                 passwordInput.focus();
 
                                 unlockBtn.disabled = false;
-                                unlockBtn.textContent = "▶︎";
+                                setUnlockButtonState("ready");
                             }, 3000);
                         }
                     } catch (error) {
                         // 에러 발생
                         setTimeout(() => {
                             unlockBtn.disabled = false;
-                            unlockBtn.textContent = "▶︎";
+                            setUnlockButtonState("ready");
                         }, 3000);
                     }
                 });
 
+                setUnlockButtonState("ready");
                 passwordInput.focus();
             });
         </script>

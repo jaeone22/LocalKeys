@@ -38,6 +38,104 @@ select,
     --border: #262626;
 }
 
+/* SVG 아이콘 (마스크 방식, currentColor로 색상 제어) */
+.lk-icon {
+    --lk-icon-url: none;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    background-color: currentColor;
+    -webkit-mask-image: var(--lk-icon-url);
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: var(--lk-icon-url);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    flex: 0 0 auto;
+}
+
+.lk-icon-sm {
+    width: 12px;
+    height: 12px;
+}
+
+.lk-icon-md {
+    width: 16px;
+    height: 16px;
+}
+
+.lk-icon-lg {
+    width: 20px;
+    height: 20px;
+}
+
+.lk-icon-xl {
+    width: 64px;
+    height: 64px;
+}
+
+.lk-icon-spin {
+    animation: spin 1s linear infinite;
+}
+
+.lk-icon-arrow-left {
+    --lk-icon-url: url("../icons/arrow-left.svg");
+}
+
+.lk-icon-arrow-right {
+    --lk-icon-url: url("../icons/arrow-right.svg");
+}
+
+.lk-icon-check {
+    --lk-icon-url: url("../icons/check.svg");
+}
+
+.lk-icon-circle-alert {
+    --lk-icon-url: url("../icons/circle-alert.svg");
+}
+
+.lk-icon-clipboard {
+    --lk-icon-url: url("../icons/clipboard.svg");
+}
+
+.lk-icon-ellipsis {
+    --lk-icon-url: url("../icons/ellipsis.svg");
+}
+
+.lk-icon-eye {
+    --lk-icon-url: url("../icons/eye.svg");
+}
+
+.lk-icon-eye-off {
+    --lk-icon-url: url("../icons/eye-off.svg");
+}
+
+.lk-icon-folder {
+    --lk-icon-url: url("../icons/folder.svg");
+}
+
+.lk-icon-key {
+    --lk-icon-url: url("../icons/key.svg");
+}
+
+.lk-icon-loader {
+    --lk-icon-url: url("../icons/loader.svg");
+}
+
+.lk-icon-lock {
+    --lk-icon-url: url("../icons/lock.svg");
+}
+
+.lk-icon-search {
+    --lk-icon-url: url("../icons/search.svg");
+}
+
+.lk-icon-x {
+    --lk-icon-url: url("../icons/x.svg");
+}
+
 /* 컨테이너 */
 .container {
     display: flex;
@@ -416,6 +514,11 @@ select,
     margin-top: 2px;
 }
 
+.message-icon .lk-icon {
+    width: 12px;
+    height: 12px;
+}
+
 .message-success .message-icon {
     background: rgba(52, 199, 89, 0.2);
     color: var(--success);
@@ -461,6 +564,11 @@ select,
     font-weight: 600;
     transition: all 0.2s ease;
     flex-shrink: 0;
+}
+
+.message-close .lk-icon {
+    width: 14px;
+    height: 14px;
 }
 
 .message-close:hover {
@@ -695,7 +803,8 @@ select,
 }
 
 .approval-icon {
-    font-size: 28px;
+    width: 28px;
+    height: 28px;
     margin-bottom: 20px;
 }
 
@@ -833,7 +942,7 @@ select,
 }
 
 .empty-state-icon {
-    font-size: 64px;
+    display: inline-block;
     margin-bottom: 20px;
     opacity: 0.5;
 }
@@ -1050,12 +1159,16 @@ select,
     background: none;
     border: none;
     color: var(--text-secondary);
-    font-size: 20px;
     cursor: pointer;
     padding: 5px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.back-btn .lk-icon {
+    width: 18px;
+    height: 18px;
 }
 
 .back-btn:hover {
@@ -1146,11 +1259,15 @@ select,
     border: none;
     color: var(--accent);
     cursor: pointer;
-    font-size: 11px;
     padding: 5px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.toggle-visibility .lk-icon {
+    width: 16px;
+    height: 16px;
 }
 
 .toggle-visibility:hover {
@@ -1209,14 +1326,32 @@ select,
 }
 
 .requirement::before {
-    content: "✗";
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
     margin-right: 8px;
-    color: var(--error);
+    background-color: var(--error);
+    -webkit-mask-image: url("../icons/x.svg");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: url("../icons/x.svg");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
 }
 
 .requirement.met::before {
-    content: "✓";
-    color: var(--success);
+    background-color: var(--success);
+    -webkit-mask-image: url("../icons/check.svg");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: url("../icons/check.svg");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
 }
 
 /* 드롭다운 메뉴 스타일 */

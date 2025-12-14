@@ -10,7 +10,9 @@
         <div class="container">
             <div class="page-header logs-header">
                 <div class="page-title">
-                    <button class="back-btn" id="back-btn">←</button>
+                    <button class="back-btn" id="back-btn">
+                        <span class="lk-icon lk-icon-arrow-left" aria-hidden="true"></span>
+                    </button>
                     <span id="title">Access Logs</span>
                 </div>
                 <div class="header-actions">
@@ -133,8 +135,8 @@
                         emptyState.className = "empty-state";
 
                         const icon = document.createElement("div");
-                        icon.className = "empty-state-icon";
-                        icon.textContent = "📋";
+                        icon.className = "empty-state-icon lk-icon lk-icon-clipboard lk-icon-xl";
+                        icon.setAttribute("aria-hidden", "true");
 
                         const title = document.createElement("div");
                         title.className = "empty-state-title";

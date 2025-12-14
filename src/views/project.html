@@ -10,7 +10,9 @@
         <div class="container">
             <div class="page-header project-header">
                 <div class="page-title">
-                    <button class="back-btn" id="back-btn">←</button>
+                    <button class="back-btn" id="back-btn">
+                        <span class="lk-icon lk-icon-arrow-left" aria-hidden="true"></span>
+                    </button>
                     <span id="project-name">Project</span>
                 </div>
                 <div class="header-actions">
@@ -23,7 +25,7 @@
             <!-- 검색 바 -->
             <div class="search-bar">
                 <input type="text" class="search-input" id="search-input" placeholder="Search secrets..." />
-                <span class="search-icon">🔍</span>
+                <span class="search-icon lk-icon lk-icon-search" aria-hidden="true"></span>
             </div>
 
             <!-- 시크릿 목록 -->
@@ -211,8 +213,11 @@
 
                     const toggleBtn = document.createElement("button");
                     toggleBtn.className = "toggle-visibility";
-                    toggleBtn.textContent = "👁️";
-                    toggleBtn.onclick = () => toggleVisibility(key);
+                    const visibilityIcon = document.createElement("span");
+                    visibilityIcon.className = "lk-icon lk-icon-eye";
+                    visibilityIcon.setAttribute("aria-hidden", "true");
+                    toggleBtn.appendChild(visibilityIcon);
+                    toggleBtn.onclick = () => toggleVisibility(key, toggleBtn);
 
                     const editBtn = document.createElement("button");
                     editBtn.className = "btn btn-secondary";
@@ -224,7 +229,10 @@
 
                     const dropdownBtn = document.createElement("button");
                     dropdownBtn.className = "btn btn-secondary dropdown-toggle";
-                    dropdownBtn.textContent = "⋯";
+                    const ellipsisIcon = document.createElement("span");
+                    ellipsisIcon.className = "lk-icon lk-icon-ellipsis";
+                    ellipsisIcon.setAttribute("aria-hidden", "true");
+                    dropdownBtn.appendChild(ellipsisIcon);
                     dropdownBtn.onclick = (e) => {
                         e.stopPropagation();
                         toggleDropdown(key);
@@ -300,8 +308,8 @@
                     emptyState.className = "empty-state";
 
                     const icon = document.createElement("div");
-                    icon.className = "empty-state-icon";
-                    icon.textContent = "🔑";
+                    icon.className = "empty-state-icon lk-icon lk-icon-key lk-icon-xl";
+                    icon.setAttribute("aria-hidden", "true");
 
                     const title = document.createElement("div");
                     title.className = "empty-state-title";
@@ -343,9 +351,15 @@
                 }
 
                 // 시크릿 가시성 토글
-                function toggleVisibility(key) {
+                function toggleVisibility(key, toggleBtn) {
                     const valueEl = document.getElementById(`value-${key}`);
                     valueEl.classList.toggle("masked");
+                    if (!toggleBtn) return;
+                    const iconEl = toggleBtn.querySelector(".lk-icon");
+                    if (!iconEl) return;
+                    const isMasked = valueEl.classList.contains("masked");
+                    iconEl.classList.remove("lk-icon-eye", "lk-icon-eye-off");
+                    iconEl.classList.add(isMasked ? "lk-icon-eye" : "lk-icon-eye-off");
                 }
 
                 // 시크릿 편집

@@ -15,7 +15,9 @@
                     <button class="btn btn-secondary" id="logs-btn">Logs</button>
                     <button class="btn btn-secondary" id="lock-btn">Lock</button>
                     <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" id="settings-dropdown-btn">⋯</button>
+                        <button class="btn btn-secondary dropdown-toggle" id="settings-dropdown-btn">
+                            <span class="lk-icon lk-icon-ellipsis" aria-hidden="true"></span>
+                        </button>
                         <div class="dropdown-menu hidden" id="dropdown-settings">
                             <button class="dropdown-item" id="install-cli-btn">Install CLI</button>
                         </div>
@@ -26,7 +28,7 @@
             <!-- 검색 바 -->
             <div class="search-bar">
                 <input type="text" class="search-input" id="search-input" placeholder="Search projects..." />
-                <span class="search-icon">🔍</span>
+                <span class="search-icon lk-icon lk-icon-search" aria-hidden="true"></span>
             </div>
 
             <!-- 프로젝트 목록 -->
@@ -164,7 +166,10 @@
 
                     dropdownBtn.className = "btn btn-secondary dropdown-toggle";
 
-                    dropdownBtn.textContent = "⋯";
+                    const ellipsisIcon = document.createElement("span");
+                    ellipsisIcon.className = "lk-icon lk-icon-ellipsis";
+                    ellipsisIcon.setAttribute("aria-hidden", "true");
+                    dropdownBtn.appendChild(ellipsisIcon);
 
                     dropdownBtn.onclick = (e) => {
                         e.stopPropagation();
@@ -220,7 +225,8 @@
 
                     icon.className = "empty-state-icon";
 
-                    icon.textContent = "📁";
+                    icon.classList.add("lk-icon", "lk-icon-folder", "lk-icon-xl");
+                    icon.setAttribute("aria-hidden", "true");
 
                     const title = document.createElement("div");
 

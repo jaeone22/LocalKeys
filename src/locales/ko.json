@@ -35,7 +35,6 @@
             "add": "프로젝트 추가"
         },
         "emptyState": {
-            "icon": "📁",
             "title": "프로젝트가 없습니다",
             "descriptionEmpty": "첫 번째 프로젝트를 생성하여 안전하게 시크릿을 관리하세요.",
             "descriptionSearch": "검색 조건과 일치하는 프로젝트가 없습니다.",
@@ -97,7 +96,6 @@
         },
         "deleteSecret": "시크릿 삭제",
         "emptyState": {
-            "icon": "🔑",
             "title": "시크릿이 없습니다",
             "descriptionEmpty": "이 프로젝트에 첫 번째 시크릿을 추가하세요.",
             "descriptionSearch": "검색 조건과 일치하는 시크릿이 없습니다."
@@ -124,7 +122,6 @@
         "title": "접근 로그",
         "clearAll": "모든 로그 삭제",
         "emptyState": {
-            "icon": "📋",
             "title": "로그가 없습니다",
             "description": "아직 기록된 로그가 없습니다."
         },

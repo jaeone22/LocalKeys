@@ -35,7 +35,6 @@
             "add": "Add Project"
         },
         "emptyState": {
-            "icon": "📁",
             "title": "No projects found",
             "descriptionEmpty": "Create your first project to start managing your secrets securely.",
             "descriptionSearch": "No projects match your search criteria.",
@@ -97,7 +96,6 @@
         },
         "deleteSecret": "Delete Secret",
         "emptyState": {
-            "icon": "🔑",
             "title": "No secrets found",
             "descriptionEmpty": "Add your first secret to this project.",
             "descriptionSearch": "No secrets match your search criteria."
@@ -124,7 +122,6 @@
         "title": "Access Logs",
         "clearAll": "Clear All Logs",
         "emptyState": {
-            "icon": "📋",
             "title": "No logs found",
             "description": "No logs have been recorded yet."
         },
