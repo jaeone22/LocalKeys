@@ -16,6 +16,14 @@ localkeys run --project=myapp -- npm start
 
 # Build
 
+## Build for all platforms
+
+```bash
+npm run build -- --mac && npm run build -- --win
+```
+
+## Build for specific platform
+
 ```bash
 npm run build -- --mac
 ```
