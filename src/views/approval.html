@@ -51,7 +51,7 @@
                 document.getElementById("label-project").textContent = i18n.t("approval.project");
                 document.getElementById("label-keys").textContent = i18n.t("approval.keys");
                 document.getElementById("label-action").textContent = i18n.t("approval.action");
-                document.getElementById("action-text").textContent = i18n.t("approval.actionText");
+                document.getElementById("action-text").textContent = i18n.t("approval.actionTextRead");
                 document.getElementById("deny-btn").textContent = i18n.t("approval.deny");
                 document.getElementById("approve-btn").textContent = i18n.t("approval.approve");
                 const projectNameEl = document.getElementById("project-name");
@@ -63,6 +63,7 @@
                 let projectName = "";
                 let keys = [];
                 let channel = "";
+                let action = "read";
                 let timeRemaining = 30;
                 let timeoutInterval = null;
 
@@ -115,10 +116,14 @@
                     projectName = data.projectName || "";
                     keys = data.keys || [];
                     channel = data.channel || "";
+                    action = data.action === "write" ? "write" : "read";
 
                     projectNameEl.textContent = projectName;
                     // 키를 쉼표로 구분하여 표시
                     secretKeysEl.textContent = keys.join(", ");
+
+                    const actionTextKey = action === "write" ? "approval.actionTextWrite" : "approval.actionTextRead";
+                    document.getElementById("action-text").textContent = i18n.t(actionTextKey);
                 }
 
                 // 이벤트 리스너

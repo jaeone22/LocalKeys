@@ -147,6 +147,8 @@
         "keys": "Keys:",
         "action": "Action:",
         "actionText": "Read access requested",
+        "actionTextRead": "Read access requested",
+        "actionTextWrite": "Write access requested",
         "approve": "Approve",
         "deny": "Deny"
     },

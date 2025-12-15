@@ -200,11 +200,11 @@
 
                 // 메시지 표시
                 function showMessage(message, type) {
-                    messageContainer.innerHTML = `
-          <div class="message message-${type}">
-            ${message}
-          </div>
-        `;
+                    messageContainer.innerHTML = "";
+                    const messageEl = document.createElement("div");
+                    messageEl.className = `message message-${type}`;
+                    messageEl.textContent = String(message ?? "");
+                    messageContainer.appendChild(messageEl);
 
                     // 3초 후 메시지 숨기기
                     setTimeout(() => {

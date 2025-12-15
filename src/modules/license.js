@@ -146,6 +146,9 @@ class License {
             };
 
             fs.writeFileSync(this.licenseFilePath, JSON.stringify(licenseData, null, 2), "utf8");
+            try {
+                fs.chmodSync(this.licenseFilePath, 0o600);
+            } catch {}
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };

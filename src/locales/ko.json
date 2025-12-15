@@ -147,6 +147,8 @@
         "keys": "키:",
         "action": "작업:",
         "actionText": "읽기 권한 요청됨",
+        "actionTextRead": "읽기 권한 요청됨",
+        "actionTextWrite": "쓰기 권한 요청됨",
         "approve": "승인",
         "deny": "거부"
     },

@@ -128,6 +128,9 @@ class Logger {
         try {
             const dataToWrite = CryptoUtil.encryptJson(logs, this.encryptionKey);
             fs.writeFileSync(this.logPath, dataToWrite);
+            try {
+                fs.chmodSync(this.logPath, 0o600);
+            } catch {}
         } catch (error) {
             console.error("Failed to write logs:", error.message);
         }
@@ -154,6 +157,11 @@ class Logger {
     }
 
     archiveLogs(daysToKeep = 30) {
+        if (!this.encryptionKey) {
+            console.warn("Encryption key not set - logs cannot be archived");
+            return;
+        }
+
         const logs = this.getLogs();
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
@@ -167,11 +175,17 @@ class Logger {
         });
 
         if (oldLogs.length > 0) {
-            const archivePath = this.logPath.replace(".json", `_${Date.now()}.json`);
-            fs.writeFileSync(archivePath, JSON.stringify(oldLogs, null, 2));
+            const basePath = this.logPath.endsWith(".enc") ? this.logPath.slice(0, -4) : this.logPath;
+            const archivePath = `${basePath}_archive_${Date.now()}.enc`;
+
+            const encryptedArchive = CryptoUtil.encryptJson(oldLogs, this.encryptionKey);
+            fs.writeFileSync(archivePath, encryptedArchive);
+            try {
+                fs.chmodSync(archivePath, 0o600);
+            } catch {}
         }
 
-        fs.writeFileSync(this.logPath, JSON.stringify(recentLogs, null, 2));
+        this._writeLogs(recentLogs);
 
         this.log(`Archived ${oldLogs.length} old log entries`, "info");
     }

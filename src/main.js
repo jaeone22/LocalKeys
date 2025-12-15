@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeImage } = 
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+const crypto = require("crypto");
 const https = require("https");
 const { URL } = require("url");
 
@@ -32,6 +33,14 @@ const DEFAULT_SETTINGS = {
     checkForUpdates: true,
 };
 
+function openExternalSafely(rawUrl) {
+    try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return;
+        shell.openExternal(parsed.toString());
+    } catch {}
+}
+
 // 설정 로드
 function loadSettings() {
     try {
@@ -49,6 +58,9 @@ function loadSettings() {
 function saveSettings(settings) {
     try {
         fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+        try {
+            fs.chmodSync(SETTINGS_FILE, 0o600);
+        } catch {}
         return { success: true };
     } catch (error) {
         console.error("설정 저장 실패:", error);
@@ -179,7 +191,9 @@ async function checkVersion() {
                     try {
                         if (res.statusCode === 200) {
                             const response = JSON.parse(data);
-                            resolve(response.version !== APP_VERSION ? response.version : null);
+                            const serverVersion = typeof response.version === "string" ? response.version.trim() : "";
+                            const isSafeVersion = /^[0-9A-Za-z][0-9A-Za-z._-]{0,63}$/.test(serverVersion);
+                            resolve(isSafeVersion && serverVersion !== APP_VERSION ? serverVersion : null);
                         } else {
                             resolve(null);
                         }
@@ -329,8 +343,14 @@ function showUpdateDialog(newVersion) {
 
     // 새 창에서 링크 열기 처리
     updateWindow.webContents.setWindowOpenHandler(({ url }) => {
-        shell.openExternal(url);
+        openExternalSafely(url);
         return { action: "deny" };
+    });
+
+    updateWindow.webContents.on("will-navigate", (event, url) => {
+        if (typeof url === "string" && url.startsWith("file://")) return;
+        event.preventDefault();
+        openExternalSafely(url);
     });
 
     // 창이 닫힐 때 처리
@@ -348,6 +368,11 @@ function initializeApp() {
     if (!fs.existsSync(LOCALKEYS_DIR)) {
         fs.mkdirSync(LOCALKEYS_DIR, { recursive: true });
     }
+    try {
+        if (os.platform() !== "win32") {
+            fs.chmodSync(LOCALKEYS_DIR, 0o700);
+        }
+    } catch {}
 
     // 다국어 초기화
     i18n = new I18n();
@@ -484,6 +509,18 @@ function createWindow() {
         menuBarVisible: false, // 윈도우에서 메뉴 바 숨기기
         show: false,
         icon: path.join(__dirname, "assets", "icon.png"),
+    });
+
+    // 외부 URL이 앱 창에서 열리지 않도록 방지
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        openExternalSafely(url);
+        return { action: "deny" };
+    });
+
+    mainWindow.webContents.on("will-navigate", (event, url) => {
+        if (typeof url === "string" && url.startsWith("file://")) return;
+        event.preventDefault();
+        openExternalSafely(url);
     });
 
     // 화면 결정 - 라이선스 -> Vault 상태 순서로 확인
@@ -690,11 +727,28 @@ function setupIpcHandlers() {
 
         if (!result.canceled) {
             const secrets = vault.getSecrets(projectName);
-            const envContent = Object.entries(secrets)
-                .map(([key, secret]) => `${key}=${secret.value}`)
-                .join("\n");
+            const encodeEnvValue = (value) => {
+                const stringValue = String(value ?? "");
+                const escaped = stringValue.replace(/\\/g, "\\\\").replace(/\r/g, "\\r").replace(/\n/g, "\\n").replace(/"/g, '\\"');
+                return `"${escaped}"`;
+            };
+
+            const lines = [];
+            for (const [key, secret] of Object.entries(secrets)) {
+                if (typeof key !== "string" || /[\r\n\0=]/.test(key)) {
+                    return { success: false, error: `Invalid key for .env export: ${String(key)}` };
+                }
+                lines.push(`${key}=${encodeEnvValue(secret?.value)}`);
+            }
+
+            const envContent = lines.join("\n");
 
             fs.writeFileSync(result.filePath, envContent);
+            try {
+                if (os.platform() !== "win32") {
+                    fs.chmodSync(result.filePath, 0o600);
+                }
+            } catch {}
             logger.logApp(`Secrets exported: ${projectName} -> ${result.filePath}`);
             return { success: true, path: result.filePath };
         }
@@ -715,8 +769,34 @@ function setupIpcHandlers() {
                 const filePath = result.filePaths[0];
                 const content = fs.readFileSync(filePath, "utf8");
                 const lines = content.split("\n");
-                const secrets = {};
+                const secrets = Object.create(null);
                 let count = 0;
+
+                const decodeEnvValue = (value) => {
+                    if (typeof value !== "string") return "";
+
+                    let decoded = value.trim();
+                    if ((decoded.startsWith('"') && decoded.endsWith('"')) || (decoded.startsWith("'") && decoded.endsWith("'"))) {
+                        decoded = decoded.substring(1, decoded.length - 1);
+                    }
+
+                    return decoded.replace(/\\(.)/g, (match, ch) => {
+                        switch (ch) {
+                            case "n":
+                                return "\n";
+                            case "r":
+                                return "\r";
+                            case "t":
+                                return "\t";
+                            case '"':
+                                return '"';
+                            case "\\":
+                                return "\\";
+                            default:
+                                return ch;
+                        }
+                    });
+                };
 
                 for (const line of lines) {
                     const trimmedLine = line.trim();
@@ -725,14 +805,8 @@ function setupIpcHandlers() {
                     const parts = trimmedLine.split("=");
                     if (parts.length >= 2) {
                         const key = parts[0].trim();
-                        // 값에서 =를 기주느로 분리
-                        const value = parts.slice(1).join("=").trim();
-
-                        // 따옴표 제거
-                        let cleanValue = value;
-                        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-                            cleanValue = value.substring(1, value.length - 1);
-                        }
+                        const rawValue = parts.slice(1).join("=");
+                        const cleanValue = decodeEnvValue(rawValue);
 
                         if (key) {
                             secrets[key] = cleanValue;
@@ -1201,17 +1275,25 @@ function setupIpcHandlers() {
 }
 
 // 승인 다이얼로그 표시
-function showApprovalDialog(projectName, keys) {
+function showApprovalDialog(projectName, keys, action = "read") {
     return new Promise((resolve) => {
         let approvalWindow = null;
         let isResolved = false;
+        let channelName = "";
+        let responseHandler = null;
 
         // keys가 배열이 아니면 배열로 변환
         if (!Array.isArray(keys)) {
             keys = [keys];
         }
+        action = action === "write" ? "write" : "read";
 
         const cleanup = () => {
+            if (channelName && responseHandler) {
+                try {
+                    ipcMain.removeListener(channelName, responseHandler);
+                } catch {}
+            }
             if (approvalWindow && !approvalWindow.isDestroyed()) {
                 approvalWindow.close();
                 approvalWindow = null;
@@ -1250,36 +1332,46 @@ function showApprovalDialog(projectName, keys) {
             }
 
             // 간단한 IPC 핸들러 사용
-            const channelName = "approval-response-simple";
+            channelName = `approval-response-${crypto.randomBytes(16).toString("hex")}`;
 
-            // 이전 핸들러 제거 (있을 경우)
-            if (ipcMain.listenerCount(channelName) > 0) {
-                ipcMain.removeAllListeners(channelName);
-            }
-
-            ipcMain.once(channelName, (event, approved) => {
+            responseHandler = (event, approved) => {
+                if (!approvalWindow || approvalWindow.isDestroyed()) return;
+                if (event?.sender?.id !== approvalWindow.webContents.id) return;
                 const keysString = keys.join(", ");
                 if (approved) {
-                    logger.logAccess("Access approved", projectName, keysString);
+                    logger.logAccess(`Access approved (${action})`, projectName, keysString);
                     doResolve({ approved: true });
                 } else {
-                    logger.logAccess("Access denied", projectName, keysString);
+                    logger.logAccess(`Access denied (${action})`, projectName, keysString);
                     doResolve({ approved: false, reason: "User denied" });
                 }
+            };
+
+            ipcMain.once(channelName, responseHandler);
+
+            approvalWindow.webContents.setWindowOpenHandler(({ url }) => {
+                openExternalSafely(url);
+                return { action: "deny" };
+            });
+
+            approvalWindow.webContents.on("will-navigate", (event, url) => {
+                if (typeof url === "string" && url.startsWith("file://")) return;
+                event.preventDefault();
+                openExternalSafely(url);
             });
 
             // 창 닫기 이벤트 처리 (사용자가 X 버튼 클릭 시)
             approvalWindow.on("close", () => {
                 if (!isResolved) {
                     const keysString = keys.join(", ");
-                    logger.logAccess("Access denied", projectName, keysString);
+                    logger.logAccess(`Access denied (${action})`, projectName, keysString);
                     doResolve({ approved: false, reason: "Dialog closed" });
                 }
             });
 
             // 프로젝트명과 키 목록 전달
             approvalWindow.webContents.once("did-finish-load", () => {
-                approvalWindow.webContents.send("approval:data", { projectName, keys, channel: channelName });
+                approvalWindow.webContents.send("approval:data", { projectName, keys, channel: channelName, action });
             });
 
             // 창 로드 에러 처리

@@ -15,6 +15,12 @@
         "electron": "^39.1.1",
         "electron-builder": "^24.0.0"
     },
+    "overrides": {
+        "config-file-ts": {
+            "glob": "^10.5.0"
+        },
+        "js-yaml": "^4.1.1"
+    },
     "build": {
         "appId": "com.localkeys.app",
         "productName": "LocalKeys",

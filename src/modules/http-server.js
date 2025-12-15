@@ -88,7 +88,9 @@ class HttpServer {
         }
 
         const token = authHeader.substring(7);
-        if (token !== this.authToken) {
+        const expected = Buffer.from(this.authToken, "utf8");
+        const received = Buffer.from(token, "utf8");
+        if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
             res.writeHead(401, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ success: false, error: "Invalid token" }));
             return false;
@@ -131,7 +133,8 @@ class HttpServer {
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify(result));
         } catch (error) {
-            res.writeHead(500, { "Content-Type": "application/json" });
+            const statusCode = error?.message === "Request too large" ? 413 : 500;
+            res.writeHead(statusCode, { "Content-Type": "application/json" });
             res.end(
                 JSON.stringify({
                     success: false,
@@ -144,9 +147,17 @@ class HttpServer {
     parseRequestBody(req) {
         return new Promise((resolve, reject) => {
             let body = "";
+            let totalLength = 0;
+            const MAX_BODY_SIZE = 1024 * 1024; // 1MB
 
             req.on("data", (chunk) => {
-                body += chunk.toString();
+                totalLength += chunk.length;
+                if (totalLength > MAX_BODY_SIZE) {
+                    req.destroy();
+                    reject(new Error("Request too large"));
+                    return;
+                }
+                body += chunk.toString("utf8");
             });
 
             req.on("end", () => {
@@ -180,7 +191,39 @@ class HttpServer {
                     } else {
                         const secrets = this.vault.getSecrets(data.projectName);
                         const keys = Object.keys(secrets);
-                        result = { success: true, data: keys };
+                        if (keys.length === 0) {
+                            result = { success: true, data: [] };
+                        } else {
+                            const approvalResult = await this.requestBatchApproval(data.projectName, keys, "read");
+                            if (approvalResult.approved) {
+                                result = { success: true, data: keys };
+                            } else {
+                                const reason = approvalResult.reason || "User denied";
+                                result = { success: false, error: `Access denied: ${reason}` };
+                            }
+                        }
+                    }
+                    break;
+
+                case "getAllSecrets":
+                    if (!this.isUnlocked) {
+                        result = { success: false, error: "Vault is locked" };
+                    } else {
+                        const secrets = this.vault.getSecrets(data.projectName);
+                        const keys = Object.keys(secrets);
+
+                        if (keys.length === 0) {
+                            result = { success: true, data: {} };
+                        } else {
+                            const approvalResult = await this.requestBatchApproval(data.projectName, keys, "read");
+
+                            if (approvalResult.approved) {
+                                result = { success: true, data: secrets };
+                            } else {
+                                const reason = approvalResult.reason || "User denied";
+                                result = { success: false, error: `Access denied: ${reason}` };
+                            }
+                        }
                     }
                     break;
 
@@ -188,7 +231,7 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        const approvalResult = await this.requestBatchApproval(data.projectName, data.keys);
+                        const approvalResult = await this.requestBatchApproval(data.projectName, data.keys, "read");
 
                         if (approvalResult.approved) {
                             const secrets = {};
@@ -209,7 +252,7 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        const approvalResult = await this.requestBatchApproval(data.projectName, [data.key]);
+                        const approvalResult = await this.requestBatchApproval(data.projectName, [data.key], "read");
 
                         if (approvalResult.approved) {
                             const value = this.vault.getSecret(data.projectName, data.key);
@@ -225,8 +268,14 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        this.vault.setSecret(data.projectName, data.key, data.value);
-                        result = { success: true };
+                        const approvalResult = await this.requestBatchApproval(data.projectName, [data.key], "write");
+                        if (approvalResult.approved) {
+                            this.vault.setSecret(data.projectName, data.key, data.value);
+                            result = { success: true };
+                        } else {
+                            const reason = approvalResult.reason || "User denied";
+                            result = { success: false, error: `Access denied: ${reason}` };
+                        }
                     }
                     break;
 
@@ -259,12 +308,12 @@ class HttpServer {
         this.approvalCallback = callback;
     }
 
-    async requestBatchApproval(projectName, keys) {
+    async requestBatchApproval(projectName, keys, action = "read") {
         if (!this.approvalCallback) {
             return { approved: false, reason: "No approval handler available" };
         }
 
-        return await this.approvalCallback(projectName, keys);
+        return await this.approvalCallback(projectName, keys, action);
     }
 }
 

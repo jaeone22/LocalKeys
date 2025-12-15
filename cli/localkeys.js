@@ -156,54 +156,32 @@ async function handleRun() {
     }
 
     try {
-        // 프로젝트의 시크릿 키 목록 가져오기 (값은 가져오지 않음)
-        const response = await sendRequest("listSecretKeys", { projectName });
+        console.log(`Requesting approval for secrets from project "${projectName}"...`);
+
+        const response = await sendRequest("getAllSecrets", { projectName });
 
         if (!response.success) {
             console.error(`Error: ${response.error}`);
             process.exit(1);
         }
 
-        const secretKeys = response.data;
+        const secrets = response.data || {};
+        const approvedCount = Object.keys(secrets).length;
 
-        if (secretKeys.length === 0) {
+        if (approvedCount === 0) {
             console.log(`No secrets found in project "${projectName}". Running command without environment variables...`);
         } else {
-            console.log(`Requesting approval for ${secretKeys.length} secret(s) from project "${projectName}"...`);
-            console.log(`Keys: ${secretKeys.join(", ")}`);
-        }
-
-        // 모든 시크릿을 한번에 승인 요청 (배치 승인)
-        let secrets = {};
-        if (secretKeys.length > 0) {
-            try {
-                const batchResponse = await sendRequest("getBatchSecrets", { projectName, keys: secretKeys });
-
-                if (batchResponse.success) {
-                    secrets = batchResponse.data;
-                    console.log(`✓ Approved: All secrets`);
-                } else {
-                    console.log(`✗ Denied: ${batchResponse.error}`);
-                }
-            } catch (error) {
-                console.log(`✗ Failed: ${error.message}`);
-            }
-        }
-
-        const approvedCount = Object.keys(secrets).length;
-        if (approvedCount === 0 && secretKeys.length > 0) {
-            console.error("\nError: Secrets were not approved. Cannot run command.");
-            process.exit(1);
-        }
-
-        if (approvedCount > 0) {
             console.log(`${approvedCount} secret(s) approved.`);
         }
 
         // 환경변수 설정하여 명령 실행
         const env = { ...process.env };
-        Object.entries(secrets).forEach(([key, value]) => {
-            env[key] = value;
+        Object.entries(secrets).forEach(([key, secret]) => {
+            if (secret && typeof secret === "object" && Object.prototype.hasOwnProperty.call(secret, "value")) {
+                env[key] = String(secret.value ?? "");
+            } else {
+                env[key] = String(secret ?? "");
+            }
         });
 
         const [cmd, ...cmdArgs] = commandToRun;
@@ -213,11 +191,16 @@ async function handleRun() {
         const child = spawn(cmd, cmdArgs, {
             env,
             stdio: "inherit",
-            shell: true, // 셸을 통해 실행하여 npm 같은 명령어도 잘 작동하도록
+            shell: true, // allow shell features like pipes/&&/redirects
+        });
+
+        child.on("error", (error) => {
+            console.error(`Failed to start command: ${error.message}`);
+            process.exit(1);
         });
 
         child.on("exit", (code) => {
-            process.exit(code);
+            process.exit(typeof code === "number" ? code : 1);
         });
     } catch (error) {
         console.error(`Error: ${error.message}`);

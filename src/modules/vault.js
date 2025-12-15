@@ -38,7 +38,7 @@ class Vault {
             version: "1.0.0",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            projects: {},
+            projects: Object.create(null),
         };
 
         await this._save();
@@ -74,6 +74,7 @@ class Vault {
         try {
             const encryptedData = fs.readFileSync(this.vaultPath);
             this.data = CryptoUtil.decryptJson(encryptedData, this.key);
+            this._normalizeData();
             this.isLocked = false;
         } catch (error) {
             this.key = null;
@@ -122,7 +123,7 @@ class Vault {
             name,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            secrets: {},
+            secrets: Object.create(null),
         };
 
         this.data.updatedAt = new Date().toISOString();
@@ -190,7 +191,7 @@ class Vault {
         // 새로운 구조: { value, expiresAt }
         this.data.projects[projectName].secrets[key] = {
             value: value,
-            expiresAt: expiresAt // null이면 만료일 없음, "YYYY-MM-DD" 형태
+            expiresAt: expiresAt, // null이면 만료일 없음, "YYYY-MM-DD" 형태
         };
         this.data.projects[projectName].updatedAt = new Date().toISOString();
         this.data.updatedAt = new Date().toISOString();
@@ -248,6 +249,36 @@ class Vault {
         if (this.isLocked) {
             throw new Error("Vault is locked");
         }
+    }
+
+    _normalizeData() {
+        if (!this.data || typeof this.data !== "object") {
+            throw new Error("Invalid vault data");
+        }
+
+        const projects = this.data.projects;
+        const normalizedProjects = Object.create(null);
+
+        if (projects && typeof projects === "object") {
+            for (const [name, project] of Object.entries(projects)) {
+                if (!project || typeof project !== "object") continue;
+
+                const normalizedProject = { ...project };
+                const secrets = project.secrets;
+                const normalizedSecrets = Object.create(null);
+
+                if (secrets && typeof secrets === "object") {
+                    for (const [key, secret] of Object.entries(secrets)) {
+                        normalizedSecrets[key] = secret;
+                    }
+                }
+
+                normalizedProject.secrets = normalizedSecrets;
+                normalizedProjects[name] = normalizedProject;
+            }
+        }
+
+        this.data.projects = normalizedProjects;
     }
 
     async _save() {
