@@ -35,5 +35,5 @@ npm run build -- --mac
 npm run build -- --win
 ```
 ```bash
-npm run build -- --linux
+npm run build -- --linux # Not supported yet
 ```
