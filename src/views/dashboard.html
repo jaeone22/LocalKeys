@@ -109,24 +109,86 @@
 
                 let filteredProjects = [];
 
+                let favorites = { projects: [], secrets: {} };
+
+                let statistics = null;
+
+                let showStatistics = true;
+
+                // 통계 로드
+                async function loadStatistics() {
+                    try {
+                        const settings = await window.localkeys.settings.get();
+                        showStatistics = settings.showStatistics !== false;
+
+                        if (!showStatistics) {
+                            statistics = null;
+                            return;
+                        }
+
+                        const result = await window.localkeys.statistics.get();
+                        if (result.success) {
+                            statistics = result.data;
+                        }
+                    } catch (error) {
+                        console.error("Failed to load statistics:", error);
+                    }
+                }
+
+                // 즐겨찾기 로드
+                async function loadFavorites() {
+                    try {
+                        const result = await window.localkeys.favorites.get();
+                        if (result.success) {
+                            favorites = result.data;
+                        }
+                    } catch (error) {
+                        console.error("Failed to load favorites:", error);
+                    }
+                }
+
                 // 프로젝트 로드
 
                 async function loadProjects() {
                     try {
+                        await loadFavorites();
+                        await loadStatistics();
+
                         const result = await window.localkeys.projects.get();
 
                         if (result.success) {
                             projects = result.data;
 
-                            filteredProjects = projects;
-
-                            renderProjects();
+                            applyFilter();
                         } else {
                             notificationManager.error(i18n.t("dashboard.notifications.failedToLoad"));
                         }
                     } catch (error) {
                         notificationManager.error(i18n.t("dashboard.notifications.failedToLoad"));
                     }
+                }
+
+                // 필터 및 정렬 적용
+                function applyFilter() {
+                    let filtered = [...projects];
+
+                    // 검색 필터
+                    const query = searchInput.value.toLowerCase().trim();
+                    if (query) {
+                        filtered = filtered.filter((p) => p.name.toLowerCase().includes(query));
+                    }
+
+                    // 즐겨찾기 항목을 위로 정렬
+                    filtered.sort((a, b) => {
+                        const aFav = favorites.projects.includes(a.name);
+                        const bFav = favorites.projects.includes(b.name);
+                        if (aFav && !bFav) return -1;
+                        if (!aFav && bFav) return 1;
+                        return 0;
+                    });
+
+                    filteredProjects = filtered;
+                    renderProjects();
                 }
 
                 function createProjectCard(project) {
@@ -140,7 +202,31 @@
 
                     nameDiv.className = "project-name";
 
-                    nameDiv.textContent = project.name;
+                    nameDiv.style.display = "flex";
+                    nameDiv.style.alignItems = "center";
+                    nameDiv.style.gap = "8px";
+
+                    const nameText = document.createElement("span");
+                    nameText.textContent = project.name;
+                    nameDiv.appendChild(nameText);
+
+                    // 즐겨찾기 아이콘
+                    const isFavorite = favorites.projects.includes(project.name);
+                    const favoriteBtn = document.createElement("button");
+                    favoriteBtn.className = "btn-icon-small";
+                    favoriteBtn.type = "button";
+                    favoriteBtn.textContent = isFavorite ? "★" : "☆";
+                    favoriteBtn.style.fontSize = "16px";
+                    favoriteBtn.style.color = isFavorite ? "var(--accent)" : "var(--text-secondary)";
+                    const favoriteLabel = isFavorite ? i18n.t("project.removeFromFavorites") : i18n.t("project.addToFavorites");
+                    favoriteBtn.setAttribute("aria-label", favoriteLabel);
+                    favoriteBtn.setAttribute("title", favoriteLabel);
+                    favoriteBtn.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+                    favoriteBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        await toggleProjectFavorite(project.name);
+                    };
+                    nameDiv.appendChild(favoriteBtn);
 
                     const dateDiv = document.createElement("div");
 
@@ -253,21 +339,71 @@
                     return emptyState;
                 }
 
+                // 통계 카드 생성
+                function createStatCard() {
+                    if (!statistics) return null;
+
+                    const card = document.createElement("div");
+                    card.className = "project-card stat-card";
+
+                    // 만료된 것이 포함된 경우 레이블 변경
+                    const expiringLabel = statistics.hasExpired ? i18n.t("dashboard.statistics.expiringAndExpired") : i18n.t("dashboard.statistics.expiringSecrets");
+
+                    // 만료 상태에 따른 색상 결정
+                    let expiringColorClass = "";
+                    if (statistics.expiringSecrets > 0) {
+                        expiringColorClass = statistics.hasExpired ? " stat-error" : " stat-warning";
+                    }
+
+                    const items = [
+                        { value: statistics.totalProjects, label: i18n.t("dashboard.statistics.totalProjects"), colorClass: "" },
+                        { value: statistics.totalSecrets, label: i18n.t("dashboard.statistics.totalSecrets"), colorClass: "" },
+                        { value: statistics.expiringSecrets, label: expiringLabel, colorClass: expiringColorClass },
+                        { value: statistics.recentAccessCount, label: i18n.t("dashboard.statistics.recentAccess"), colorClass: "" },
+                    ];
+
+                    items.forEach((item) => {
+                        const itemDiv = document.createElement("div");
+                        itemDiv.className = "stat-item";
+
+                        const valueDiv = document.createElement("div");
+                        valueDiv.className = "stat-value" + item.colorClass;
+                        valueDiv.textContent = item.value;
+
+                        const labelDiv = document.createElement("div");
+                        labelDiv.className = "stat-label";
+                        labelDiv.textContent = item.label;
+
+                        itemDiv.appendChild(valueDiv);
+                        itemDiv.appendChild(labelDiv);
+                        card.appendChild(itemDiv);
+                    });
+
+                    return card;
+                }
+
                 // 프로젝트 렌더링
 
                 function renderProjects() {
-                    projectsContainer.innerHTML = ""; // Clear existing content
+                    projectsContainer.innerHTML = "";
 
                     if (filteredProjects.length === 0) {
                         projectsContainer.appendChild(createEmptyStateElement());
-
                         return;
                     }
 
                     const grid = document.createElement("div");
-
                     grid.className = "projects-grid";
 
+                    // 통계 카드를 먼저 추가 (프로젝트가 있을 때만)
+                    if (showStatistics && statistics && projects.length > 0) {
+                        const statCard = createStatCard();
+                        if (statCard) {
+                            grid.appendChild(statCard);
+                        }
+                    }
+
+                    // 프로젝트 카드 추가
                     filteredProjects.forEach((project) => {
                         grid.appendChild(createProjectCard(project));
                     });
@@ -369,18 +505,25 @@
                     }
                 }
 
+                // 즐겨찾기 토글
+                async function toggleProjectFavorite(projectName) {
+                    try {
+                        const result = await window.localkeys.favorite.toggleProject(projectName);
+                        if (result.success) {
+                            await loadFavorites();
+                            applyFilter();
+                            const message = result.added ? i18n.t("dashboard.notifications.favoriteAdded") : i18n.t("dashboard.notifications.favoriteRemoved");
+                            notificationManager.success(message);
+                        }
+                    } catch (error) {
+                        console.error("Failed to toggle favorite:", error);
+                    }
+                }
+
                 // 검색
 
                 function searchProjects() {
-                    const query = searchInput.value.toLowerCase().trim();
-
-                    if (!query) {
-                        filteredProjects = projects;
-                    } else {
-                        filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(query));
-                    }
-
-                    renderProjects();
+                    applyFilter();
                 }
 
                 function formatDate(dateString) {

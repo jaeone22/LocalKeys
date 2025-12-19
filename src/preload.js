@@ -81,6 +81,21 @@ const api = {
         get: () => ipcRenderer.invoke("settings:get"),
         set: (settings) => ipcRenderer.invoke("settings:set", settings),
     },
+
+    // 즐겨찾기 관리
+    favorites: {
+        get: () => ipcRenderer.invoke("favorites:get"),
+    },
+
+    favorite: {
+        toggleProject: (projectName) => ipcRenderer.invoke("favorite:toggleProject", projectName),
+        toggleSecret: (projectName, secretKey) => ipcRenderer.invoke("favorite:toggleSecret", projectName, secretKey),
+    },
+
+    // 통계
+    statistics: {
+        get: () => ipcRenderer.invoke("statistics:get"),
+    },
 };
 
 // 렌더러 프로세스에 API 노출

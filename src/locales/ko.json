@@ -29,6 +29,13 @@
         "installing": "설치 중...",
         "uninstalling": "제거 중...",
         "searchPlaceholder": "프로젝트 검색...",
+        "statistics": {
+            "totalProjects": "총 프로젝트 수",
+            "totalSecrets": "총 시크릿 수",
+            "expiringSecrets": "만료 예정",
+            "expiringAndExpired": "만료 예정 및 만료",
+            "recentAccess": "최근 접근"
+        },
         "addProjectModal": {
             "title": "새 프로젝트 추가",
             "label": "프로젝트 이름",
@@ -62,7 +69,9 @@
             "enterName": "프로젝트 이름을 입력하세요",
             "projectExists": "이미 같은 이름의 프로젝트가 존재합니다",
             "cliInstallFailed": "CLI {{action}} 실패: {{error}}",
-            "lockError": "금고 잠금 오류: {{error}}"
+            "lockError": "금고 잠금 오류: {{error}}",
+            "favoriteAdded": "즐겨찾기에 추가되었습니다",
+            "favoriteRemoved": "즐겨찾기에서 제거되었습니다"
         }
     },
     "project": {
@@ -71,6 +80,8 @@
         "exportEnv": "내보내기",
         "searchPlaceholder": "시크릿 검색...",
         "edit": "편집",
+        "addToFavorites": "즐겨찾기 추가",
+        "removeFromFavorites": "즐겨찾기 제거",
         "addSecretModal": {
             "title": "새 시크릿 추가",
             "keyLabel": "키",
@@ -236,6 +247,8 @@
         },
         "checkForUpdates": "업데이트 확인",
         "checkForUpdatesDesc": "시작 시 새 버전을 자동으로 확인합니다",
+        "showStatistics": "통계 표시",
+        "showStatisticsDesc": "대시보드에 통계를 표시합니다",
         "autoLock": "자동 잠금",
         "autoLockDesc": "시스템 유휴 시간 후 자동으로 잠금",
         "autoLockTimeout": "자동 잠금 시간 (분)",

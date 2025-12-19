@@ -29,6 +29,13 @@
         "installing": "Installing...",
         "uninstalling": "Uninstalling...",
         "searchPlaceholder": "Search projects...",
+        "statistics": {
+            "totalProjects": "Total Projects",
+            "totalSecrets": "Total Secrets",
+            "expiringSecrets": "Expiring Soon",
+            "expiringAndExpired": "Expiring & Expired",
+            "recentAccess": "Recent Access"
+        },
         "addProjectModal": {
             "title": "Add New Project",
             "label": "Project Name",
@@ -62,7 +69,9 @@
             "enterName": "Please enter a project name",
             "projectExists": "A project with this name already exists",
             "cliInstallFailed": "CLI {{action}} failed: {{error}}",
-            "lockError": "Error locking vault: {{error}}"
+            "lockError": "Error locking vault: {{error}}",
+            "favoriteAdded": "Added to favorites",
+            "favoriteRemoved": "Removed from favorites"
         }
     },
     "project": {
@@ -71,6 +80,8 @@
         "exportEnv": "Export",
         "searchPlaceholder": "Search secrets...",
         "edit": "Edit",
+        "addToFavorites": "Add to favorites",
+        "removeFromFavorites": "Remove from favorites",
         "addSecretModal": {
             "title": "Add New Secret",
             "keyLabel": "Key",
@@ -236,6 +247,8 @@
         },
         "checkForUpdates": "Check for updates",
         "checkForUpdatesDesc": "Automatically check for new versions on startup",
+        "showStatistics": "Show Statistics",
+        "showStatisticsDesc": "Display statistics on dashboard",
         "autoLock": "Auto Lock",
         "autoLockDesc": "Automatically lock vault after system idle time",
         "autoLockTimeout": "Auto Lock Timeout (minutes)",

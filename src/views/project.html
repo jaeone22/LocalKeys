@@ -164,6 +164,19 @@
                 let secrets = {};
                 let filteredSecrets = {};
                 let editingKey = "";
+                let favorites = { projects: [], secrets: {} };
+
+                // 즐겨찾기 로드
+                async function loadFavorites() {
+                    try {
+                        const result = await window.localkeys.favorites.get();
+                        if (result.success) {
+                            favorites = result.data;
+                        }
+                    } catch (error) {
+                        console.error("Failed to load favorites:", error);
+                    }
+                }
 
                 // URL에서 프로젝트 이름 가져오기
                 function getProjectNameFromURL() {
@@ -174,17 +187,53 @@
                 // 시크릿 로드
                 async function loadSecrets() {
                     try {
+                        await loadFavorites();
+
                         const result = await window.localkeys.secrets.getAll(projectName);
 
                         if (result.success) {
                             secrets = result.data;
-                            filteredSecrets = secrets;
-                            renderSecrets();
+                            applyFilter();
                         } else {
                             notificationManager.error(i18n.t("project.notifications.failedToLoad"));
                         }
                     } catch (error) {
                         notificationManager.error(i18n.t("project.notifications.failedToLoad"));
+                    }
+                }
+
+                // 필터 및 정렬 적용
+                function applyFilter() {
+                    let filtered = { ...secrets };
+
+                    // 검색 필터
+                    const query = searchInput.value.toLowerCase().trim();
+                    if (query) {
+                        const searchFiltered = {};
+                        Object.keys(filtered).forEach((key) => {
+                            if (key.toLowerCase().includes(query)) {
+                                searchFiltered[key] = filtered[key];
+                            }
+                        });
+                        filtered = searchFiltered;
+                    }
+
+                    filteredSecrets = filtered;
+                    renderSecrets();
+                }
+
+                // 즐겨찾기 토글
+                async function toggleSecretFavorite(secretKey) {
+                    try {
+                        const result = await window.localkeys.favorite.toggleSecret(projectName, secretKey);
+                        if (result.success) {
+                            await loadFavorites();
+                            applyFilter();
+                            const message = result.added ? i18n.t("dashboard.notifications.favoriteAdded") : i18n.t("dashboard.notifications.favoriteRemoved");
+                            notificationManager.success(message);
+                        }
+                    } catch (error) {
+                        console.error("Failed to toggle favorite:", error);
                     }
                 }
 
@@ -228,7 +277,31 @@
 
                     const keyDiv = document.createElement("div");
                     keyDiv.className = "secret-key";
-                    keyDiv.textContent = key;
+                    keyDiv.style.display = "flex";
+                    keyDiv.style.alignItems = "center";
+                    keyDiv.style.gap = "8px";
+
+                    const keyText = document.createElement("span");
+                    keyText.textContent = key;
+                    keyDiv.appendChild(keyText);
+
+                    // 즐겨찾기 아이콘
+                    const isFavorite = (favorites.secrets[projectName] || []).includes(key);
+                    const favoriteBtn = document.createElement("button");
+                    favoriteBtn.className = "btn-icon-small";
+                    favoriteBtn.type = "button";
+                    favoriteBtn.textContent = isFavorite ? "★" : "☆";
+                    favoriteBtn.style.fontSize = "16px";
+                    favoriteBtn.style.color = isFavorite ? "var(--accent)" : "var(--text-secondary)";
+                    const favoriteLabel = isFavorite ? i18n.t("project.removeFromFavorites") : i18n.t("project.addToFavorites");
+                    favoriteBtn.setAttribute("aria-label", favoriteLabel);
+                    favoriteBtn.setAttribute("title", favoriteLabel);
+                    favoriteBtn.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+                    favoriteBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        await toggleSecretFavorite(key);
+                    };
+                    keyDiv.appendChild(favoriteBtn);
 
                     const actionsDiv = document.createElement("div");
                     actionsDiv.className = "secret-actions";
@@ -367,12 +440,22 @@
                 // 시크릿 렌더링
                 function renderSecrets() {
                     secretsContainer.innerHTML = ""; // Clear existing content
-                    const secretKeys = Object.keys(filteredSecrets);
+                    let secretKeys = Object.keys(filteredSecrets);
 
                     if (secretKeys.length === 0) {
                         secretsContainer.appendChild(createEmptyStateElement());
                         return;
                     }
+
+                    // 즐겨찾기 항목을 위로 정렬
+                    const favoriteKeys = favorites.secrets[projectName] || [];
+                    secretKeys.sort((a, b) => {
+                        const aFav = favoriteKeys.includes(a);
+                        const bFav = favoriteKeys.includes(b);
+                        if (aFav && !bFav) return -1;
+                        if (!aFav && bFav) return 1;
+                        return 0;
+                    });
 
                     const fragment = document.createDocumentFragment();
                     secretKeys.forEach((key) => {
@@ -574,24 +657,12 @@
 
                 // 검색
                 function searchSecrets() {
-                    const query = searchInput.value.toLowerCase().trim();
-
-                    if (!query) {
-                        filteredSecrets = secrets;
-                    } else {
-                        filteredSecrets = {};
-                        Object.keys(secrets).forEach((key) => {
-                            if (key.toLowerCase().includes(query)) {
-                                filteredSecrets[key] = secrets[key];
-                            }
-                        });
-                    }
-
-                    renderSecrets();
+                    applyFilter();
                 }
 
                 // 이벤트 리스너
                 searchInput.addEventListener("input", searchSecrets);
+
                 backBtn.addEventListener("click", function () {
                     window.location.href = "dashboard.html";
                 });

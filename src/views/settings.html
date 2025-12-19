@@ -41,6 +41,16 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label" id="label-show-statistics">Show Statistics</span>
+                            <span class="settings-item-description" id="desc-show-statistics">Display statistics on dashboard</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-statistics-toggle" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
 
                     <!-- 자동 잠금 -->
                     <div class="settings-item">
@@ -91,6 +101,8 @@
                 document.getElementById("lang-opt-ko").textContent = i18n.t("settings.languageOptions.ko");
                 document.getElementById("label-check-updates").textContent = i18n.t("settings.checkForUpdates");
                 document.getElementById("desc-check-updates").textContent = i18n.t("settings.checkForUpdatesDesc");
+                document.getElementById("label-show-statistics").textContent = i18n.t("settings.showStatistics");
+                document.getElementById("desc-show-statistics").textContent = i18n.t("settings.showStatisticsDesc");
 
                 // 보안 설정 번역
                 document.getElementById("label-auto-lock").textContent = i18n.t("settings.autoLock");
@@ -101,6 +113,7 @@
 
                 const backBtn = document.getElementById("back-btn");
                 const checkUpdatesToggle = document.getElementById("check-updates-toggle");
+                const showStatisticsToggle = document.getElementById("show-statistics-toggle");
                 const languageSelect = document.getElementById("language-select");
 
                 // 보안 설정 요소
@@ -119,6 +132,7 @@
                     try {
                         const settings = await window.localkeys.settings.get();
                         checkUpdatesToggle.checked = settings.checkForUpdates;
+                        showStatisticsToggle.checked = settings.showStatistics !== false; // 기본값 true
                         languageSelect.value = settings.locale || "system";
 
                         // 보안 설정 로드
@@ -137,6 +151,7 @@
                     try {
                         const settings = {
                             checkForUpdates: checkUpdatesToggle.checked,
+                            showStatistics: showStatisticsToggle.checked,
                             locale: languageSelect.value,
                             autoLock: {
                                 enabled: autoLockToggle.checked,
@@ -163,6 +178,7 @@
                 });
 
                 checkUpdatesToggle.addEventListener("change", saveSettings);
+                showStatisticsToggle.addEventListener("change", saveSettings);
                 languageSelect.addEventListener("change", saveSettings);
 
                 // 보안 설정 이벤트 리스너

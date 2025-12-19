@@ -39,6 +39,10 @@ class Vault {
             version: "1.0.0",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            favorites: {
+                projects: [],
+                secrets: Object.create(null),
+            },
             projects: Object.create(null),
         };
 
@@ -139,6 +143,17 @@ class Vault {
         }
 
         delete this.data.projects[name];
+
+        // 즐겨찾기에서도 제거
+        if (this.data.favorites) {
+            if (Array.isArray(this.data.favorites.projects)) {
+                this.data.favorites.projects = this.data.favorites.projects.filter((p) => p !== name);
+            }
+            if (this.data.favorites.secrets && typeof this.data.favorites.secrets === "object") {
+                delete this.data.favorites.secrets[name];
+            }
+        }
+
         this.data.updatedAt = new Date().toISOString();
         this._scheduleAutoSave();
     }
@@ -264,7 +279,7 @@ class Vault {
 
             // 기존 시크릿과 값이 다르면 업데이트
             const existingValue = typeof existing === "string" ? existing : existing?.value;
-            const existingExpiresAt = typeof existing === "object" ? (existing?.expiresAt ?? null) : null;
+            const existingExpiresAt = typeof existing === "object" ? existing?.expiresAt ?? null : null;
             if (existingValue !== value || existingExpiresAt !== null) {
                 this.setSecret(projectName, key, value, null);
             }
@@ -283,8 +298,21 @@ class Vault {
         }
 
         delete this.data.projects[projectName].secrets[key];
-        this.data.projects[projectName].updatedAt = new Date().toISOString();
-        this.data.updatedAt = new Date().toISOString();
+
+        // 즐겨찾기에서도 제거
+        const favoriteKeys = this.data.favorites?.secrets?.[projectName];
+        if (Array.isArray(favoriteKeys)) {
+            const nextKeys = favoriteKeys.filter((k) => k !== key);
+            if (nextKeys.length > 0) {
+                this.data.favorites.secrets[projectName] = nextKeys;
+            } else {
+                delete this.data.favorites.secrets[projectName];
+            }
+        }
+
+        const now = new Date().toISOString();
+        this.data.projects[projectName].updatedAt = now;
+        this.data.updatedAt = now;
         this._scheduleAutoSave();
     }
 
@@ -380,6 +408,53 @@ class Vault {
         }
 
         this.data.projects = normalizedProjects;
+
+        // favorites 정규화 (프로토타입 오염 방지 + 데이터 정리)
+        const favorites = this.data.favorites;
+        const normalizedFavorites = {
+            projects: [],
+            secrets: Object.create(null),
+        };
+
+        if (favorites && typeof favorites === "object") {
+            // 프로젝트 즐겨찾기
+            if (Array.isArray(favorites.projects)) {
+                const seen = new Set();
+                for (const projectName of favorites.projects) {
+                    if (typeof projectName !== "string") continue;
+                    if (!normalizedProjects[projectName]) continue;
+                    if (seen.has(projectName)) continue;
+                    seen.add(projectName);
+                    normalizedFavorites.projects.push(projectName);
+                }
+            }
+
+            // 시크릿 즐겨찾기
+            const favoriteSecrets = favorites.secrets;
+            if (favoriteSecrets && typeof favoriteSecrets === "object") {
+                for (const [projectName, secretKeys] of Object.entries(favoriteSecrets)) {
+                    if (!normalizedProjects[projectName]) continue;
+                    if (!Array.isArray(secretKeys)) continue;
+
+                    const projectSecrets = normalizedProjects[projectName].secrets || Object.create(null);
+                    const seenKeys = new Set();
+                    const normalizedKeys = [];
+                    for (const key of secretKeys) {
+                        if (typeof key !== "string") continue;
+                        if (projectSecrets[key] === undefined) continue;
+                        if (seenKeys.has(key)) continue;
+                        seenKeys.add(key);
+                        normalizedKeys.push(key);
+                    }
+
+                    if (normalizedKeys.length > 0) {
+                        normalizedFavorites.secrets[projectName] = normalizedKeys;
+                    }
+                }
+            }
+        }
+
+        this.data.favorites = normalizedFavorites;
     }
 
     async _save() {
@@ -442,6 +517,111 @@ class Vault {
         }
 
         return this._save();
+    }
+
+    // 즐겨찾기 관련 메서드
+    toggleProjectFavorite(projectName) {
+        this._ensureUnlocked();
+
+        if (!this.data.projects[projectName]) {
+            throw new Error(`Project '${projectName}' does not exist`);
+        }
+
+        const current = Array.isArray(this.data.favorites.projects) ? this.data.favorites.projects : [];
+        const isFavorite = current.includes(projectName);
+        if (isFavorite) {
+            this.data.favorites.projects = current.filter((p) => p !== projectName);
+        } else {
+            const next = current.filter((p) => p !== projectName);
+            next.push(projectName);
+            this.data.favorites.projects = next;
+        }
+
+        this.data.updatedAt = new Date().toISOString();
+        this._scheduleAutoSave();
+
+        return !isFavorite; // true면 추가됨, false면 제거됨
+    }
+
+    toggleSecretFavorite(projectName, secretKey) {
+        this._ensureUnlocked();
+
+        if (!this.data.projects[projectName]) {
+            throw new Error(`Project '${projectName}' does not exist`);
+        }
+
+        if (this.data.projects[projectName].secrets[secretKey] === undefined) {
+            throw new Error(`Secret '${secretKey}' does not exist in project '${projectName}'`);
+        }
+
+        const current = Array.isArray(this.data.favorites.secrets?.[projectName]) ? this.data.favorites.secrets[projectName] : [];
+        const isFavorite = current.includes(secretKey);
+        if (isFavorite) {
+            const next = current.filter((k) => k !== secretKey);
+            if (next.length > 0) {
+                this.data.favorites.secrets[projectName] = next;
+            } else {
+                delete this.data.favorites.secrets[projectName];
+            }
+        } else {
+            const next = current.filter((k) => k !== secretKey);
+            next.push(secretKey);
+            this.data.favorites.secrets[projectName] = next;
+        }
+
+        this.data.updatedAt = new Date().toISOString();
+        this._scheduleAutoSave();
+
+        return !isFavorite; // true면 추가됨, false면 제거됨
+    }
+
+    getFavorites() {
+        this._ensureUnlocked();
+
+        return {
+            projects: [...this.data.favorites.projects],
+            secrets: JSON.parse(JSON.stringify(this.data.favorites.secrets)),
+        };
+    }
+
+    // 통계 관련 메서드
+    getStatistics() {
+        this._ensureUnlocked();
+
+        const totalProjects = Object.keys(this.data.projects).length;
+        let totalSecrets = 0;
+        let expiringSecrets = 0;
+        let hasExpired = false;
+
+        const now = new Date();
+        const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        for (const project of Object.values(this.data.projects)) {
+            const secrets = project.secrets || {};
+            totalSecrets += Object.keys(secrets).length;
+
+            for (const secret of Object.values(secrets)) {
+                const expiresAt = typeof secret === "object" ? secret.expiresAt : null;
+                if (expiresAt) {
+                    const expiryDate = new Date(expiresAt);
+                    // 만료된 것 + 7일 이내 만료 예정
+                    if (expiryDate <= sevenDaysLater) {
+                        expiringSecrets++;
+                        // 이미 만료된 경우 플래그 설정
+                        if (expiryDate < now) {
+                            hasExpired = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return {
+            totalProjects,
+            totalSecrets,
+            expiringSecrets,
+            hasExpired,
+        };
     }
 }
 

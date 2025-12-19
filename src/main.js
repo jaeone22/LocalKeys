@@ -36,6 +36,7 @@ const SETTINGS_FILE = path.join(LOCALKEYS_DIR, "settings.json");
 const DEFAULT_SETTINGS = {
     checkForUpdates: true,
     locale: "system",
+    showStatistics: true,
     autoLock: {
         enabled: true,
         timeout: 30, // 분 단위
@@ -115,7 +116,6 @@ function applyScreenCaptureProtection() {
 
     if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setContentProtection(enabled);
-        console.log(`화면 캡처 방지: ${enabled ? "활성화" : "비활성화"}`);
     }
 }
 
@@ -756,6 +756,66 @@ function setupIpcHandlers() {
         try {
             vault.deleteSecret(projectName, key);
             return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 즐겨찾기 토글 (프로젝트)
+    ipcMain.handle("favorite:toggleProject", async (event, projectName) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        try {
+            const added = vault.toggleProjectFavorite(projectName);
+            return { success: true, added };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 즐겨찾기 토글 (시크릿)
+    ipcMain.handle("favorite:toggleSecret", async (event, projectName, secretKey) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        try {
+            const added = vault.toggleSecretFavorite(projectName, secretKey);
+            return { success: true, added };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 즐겨찾기 조회
+    ipcMain.handle("favorites:get", () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        try {
+            const favorites = vault.getFavorites();
+            return { success: true, data: favorites };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 통계 조회
+    ipcMain.handle("statistics:get", async () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        try {
+            const stats = vault.getStatistics();
+            // 최근 24시간 이내 로그 수 추가
+            const logs = logger.getLogs();
+            const now = new Date();
+            const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const recentAccessCount = logs.filter((log) => {
+                if (log.category !== "access") return false;
+                const logTime = new Date(log.timestamp);
+                return logTime >= oneDayAgo;
+            }).length;
+
+            return {
+                success: true,
+                data: {
+                    ...stats,
+                    recentAccessCount,
+                },
+            };
         } catch (error) {
             return { success: false, error: error.message };
         }
