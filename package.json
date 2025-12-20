@@ -17,7 +17,9 @@
     },
     "scripts": {
         "start": "electron .",
-        "build": "electron-builder"
+        "build": "npm run build:mac && npm run build:win",
+        "build:mac": "electron-builder --mac",
+        "build:win": "electron-builder --win"
     },
     "devDependencies": {
         "electron": "^39.1.1",
@@ -44,9 +46,15 @@
             "icon": "src/assets/macicon.png",
             "identity": null
         },
+        "dmg": {
+            "artifactName": "${productName}-macOS-${version}.${ext}"
+        },
         "win": {
             "target": "nsis",
             "icon": "src/assets/icon.png"
+        },
+        "nsis": {
+            "artifactName": "${productName}-windows-${version}.${ext}"
         },
         "linux": {
             "target": "AppImage",
