@@ -1,16 +1,24 @@
 {
     "name": "localkeys",
-    "version": "1.4.0",
+    "version": "1.4.1",
+    "description": "Electron desktop app to encrypt and manage secrets locally with GUI + CLI approval prompts.",
+    "author": "gpdir16 <me@gpdir16.com>",
+    "homepage": "https://localkeys.privatestater.com",
+    "bugs": {
+        "url": "https://github.com/jaeone22/LocalKeys/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jaeone22/LocalKeys.git"
+    },
     "main": "src/main.js",
     "bin": {
         "localkeys": "./cli/localkeys.js"
     },
     "scripts": {
         "start": "electron .",
-        "install-cli": "chmod +x cli/localkeys.js && npm link",
         "build": "electron-builder"
     },
-    "author": "PrivateStater",
     "devDependencies": {
         "electron": "^39.1.1",
         "electron-builder": "^24.0.0"
@@ -33,7 +41,8 @@
         ],
         "mac": {
             "category": "public.app-category.developer-tools",
-            "icon": "src/assets/macicon.png"
+            "icon": "src/assets/macicon.png",
+            "identity": null
         },
         "win": {
             "target": "nsis",
@@ -42,6 +51,7 @@
         "linux": {
             "target": "AppImage",
             "icon": "src/assets/icon.png"
-        }
+        },
+        "afterPack": "./scripts/sign-adhoc.js"
     }
 }
